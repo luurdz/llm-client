@@ -8,8 +8,7 @@ EXTRACTION_PROMPT = ChatPromptTemplate.from_messages(
             "descriptions and error logs. Extract the technical information from the "
             "text provided by the user. Only use information that appears in the text "
             "and never invent technologies. If the text is ambiguous or has little "
-            "technical detail, extract only what is explicitly mentioned and choose "
-            "the lowest criticality level that the text supports."),
+            "technical detail, extract only what is explicitly mentioned."),
         ),
         ("human", "Text to analyze:\n{text}"),
     ]
