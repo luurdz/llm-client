@@ -20,6 +20,7 @@ class LLMConfig(BaseModel):
     max_tokens: int = Field(default=1024, gt=0)
     api_key: SecretStr = Field(min_length=1)
     timeout: float = Field(default=30, gt=0)
+    fallback_model: NotEmptyStr | None = None
 
 
 class ModelResponse(BaseModel):

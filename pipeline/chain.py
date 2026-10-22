@@ -1,18 +1,26 @@
 import logging
 
-from langchain_core.exceptions import OutputParserException
+import httpx
+from langchain_core.exceptions import (
+    ModelAPIError,
+    ModelConnectionError,
+    ModelRateLimitError,
+    ModelTimeoutError,
+    OutputParserException,
+)
 from langchain_core.runnables import Runnable
 from pydantic import ValidationError
 
 from llm_client.config import load_config
 from llm_client.langchain_models import build_chat_model
+from llm_client.schemas import LLMConfig
 from pipeline.prompts import EXTRACTION_PROMPT
 from pipeline.schemas import TechnicalEntities
 
 logger = logging.getLogger(__name__)
 
 TRUNCATION_REASONS = {"MAX_TOKENS", "max_tokens"}
-
+FALLBACK_ERRORS = (ModelAPIError, ModelRateLimitError, ModelTimeoutError, ModelConnectionError, httpx.TransportError)
 
 class IncompleteOutputError(Exception):
     """Raised when the model response was cut off by the max tokens limit."""
@@ -36,9 +44,7 @@ def check_output(output: dict) -> TechnicalEntities:
     )
     return entities
 
-
-def build_chain() -> Runnable:
-    config = load_config()
+def _build_extraction_chain(config: LLMConfig) -> Runnable:
     model = build_chat_model(config.model_copy(update={"temperature": 0}))
     chain = (
         EXTRACTION_PROMPT
@@ -49,6 +55,15 @@ def build_chain() -> Runnable:
         stop_after_attempt=3,
     )
     return chain
+
+def build_chain() -> Runnable:
+    config = load_config()
+    primary = _build_extraction_chain(config)
+    if config.fallback_model:
+        logger.info(f"Fallback model configured: {config.fallback_model}")
+        fallback = _build_extraction_chain(config.model_copy(update={"model": config.fallback_model}))
+        return primary.with_fallbacks([fallback], exceptions_to_handle=FALLBACK_ERRORS)
+    return primary
 
 
 async def process_text(text: str) -> TechnicalEntities:
