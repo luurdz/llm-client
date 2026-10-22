@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from langchain_core.exceptions import OutputParserException
 from pydantic import ValidationError
 
-from pipeline.chain import IncompleteOutputError, process_text
+from pipeline.chain import IncompleteOutputError, process_text, process_texts
 
 EXAMPLES = {
     "normal": (
@@ -30,13 +30,25 @@ async def main():
 
     load_dotenv()
 
-    for name, text in EXAMPLES.items():
-        try:
-            print(f"\n=== {name} ===")
-            result = await process_text(text)
+    try:
+        print("\n=== Single text (ainvoke) ===")
+        result = await process_text(EXAMPLES["normal"])
+        print(result.model_dump_json(by_alias=True, indent=2))
+    except (IncompleteOutputError, OutputParserException, ValidationError) as e:
+        print(f"Extraction failed: {e}")
+
+    print("\n=== Batch (abatch) ===")
+
+    texts = list(EXAMPLES.values())
+    results = await process_texts(texts)
+    for name, result in zip(EXAMPLES.keys(), results):
+        print(f"\n--- {name} ---")
+        if isinstance(result, Exception):
+            print(f"Extraction failed: {str(result).splitlines()[0]}")
+        else:
             print(result.model_dump_json(by_alias=True, indent=2))
-        except (IncompleteOutputError, OutputParserException, ValidationError) as e:
-            print(f"Extraction failed: {e}")
+
+
 
 
 if __name__ == "__main__":

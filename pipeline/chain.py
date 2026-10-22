@@ -56,3 +56,11 @@ async def process_text(text: str) -> TechnicalEntities:
     logger.info(f"Starting chain with {len(text)} characters")
     result = await chain.ainvoke({"text": text})
     return result
+
+
+async def process_texts(texts: list[str]) -> list[TechnicalEntities | Exception]:
+    chain = build_chain()
+    logger.info(f"Starting chain with {len(texts)} texts")
+    inputs = [{"text": text} for text in texts]
+    results = await chain.abatch(inputs, config={"max_concurrency": 5}, return_exceptions=True)
+    return results
