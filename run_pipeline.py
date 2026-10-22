@@ -49,7 +49,5 @@ async def main():
             print(result.model_dump_json(by_alias=True, indent=2))
 
 
-
-
 if __name__ == "__main__":
     asyncio.run(main())

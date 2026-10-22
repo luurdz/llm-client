@@ -20,7 +20,14 @@ from pipeline.schemas import TechnicalEntities
 logger = logging.getLogger(__name__)
 
 TRUNCATION_REASONS = {"MAX_TOKENS", "max_tokens"}
-FALLBACK_ERRORS = (ModelAPIError, ModelRateLimitError, ModelTimeoutError, ModelConnectionError, httpx.TransportError)
+FALLBACK_ERRORS = (
+    ModelAPIError,
+    ModelRateLimitError,
+    ModelTimeoutError,
+    ModelConnectionError,
+    httpx.TransportError,
+)
+
 
 class IncompleteOutputError(Exception):
     """Raised when the model response was cut off by the max tokens limit."""
@@ -44,6 +51,7 @@ def check_output(output: dict) -> TechnicalEntities:
     )
     return entities
 
+
 def _build_extraction_chain(config: LLMConfig) -> Runnable:
     model = build_chat_model(config.model_copy(update={"temperature": 0}))
     chain = (
@@ -56,12 +64,15 @@ def _build_extraction_chain(config: LLMConfig) -> Runnable:
     )
     return chain
 
+
 def build_chain() -> Runnable:
     config = load_config()
     primary = _build_extraction_chain(config)
     if config.fallback_model:
         logger.info(f"Fallback model configured: {config.fallback_model}")
-        fallback = _build_extraction_chain(config.model_copy(update={"model": config.fallback_model}))
+        fallback = _build_extraction_chain(
+            config.model_copy(update={"model": config.fallback_model})
+        )
         return primary.with_fallbacks([fallback], exceptions_to_handle=FALLBACK_ERRORS)
     return primary
 
@@ -77,5 +88,7 @@ async def process_texts(texts: list[str]) -> list[TechnicalEntities | Exception]
     chain = build_chain()
     logger.info(f"Starting chain with {len(texts)} texts")
     inputs = [{"text": text} for text in texts]
-    results = await chain.abatch(inputs, config={"max_concurrency": 5}, return_exceptions=True)
+    results = await chain.abatch(
+        inputs, config={"max_concurrency": 5}, return_exceptions=True
+    )
     return results

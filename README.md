@@ -5,7 +5,7 @@ Proyecto integrador del curso de AI Engineering. Cada unidad suma una parte sobr
 - **Unidad 1 — Cliente asíncrono de LLMs** (`llm_client/`, `main.py`): interfaz común para OpenAI, Anthropic y Gemini, con respuestas normales y en streaming, validación de la configuración con Pydantic y errores controlados.
 - **Unidad 2 — Pipeline de procesamiento validado** (`pipeline/`, `run_pipeline.py`): pipeline con LangChain (LCEL) que extrae información técnica de un texto (un log de error o una descripción de arquitectura) y devuelve un objeto validado con Pydantic.
 
-La versión exacta de cada entrega está marcada con un tag: [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1) y [`unidad-2`](https://github.com/luurdz/llm-client/tree/unidad-2).
+La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1) y unidad 2 en la rama [`entrega-2`](https://github.com/luurdz/llm-client/tree/entrega-2).
 
 ## Requisitos
 
@@ -58,6 +58,7 @@ cp .env.example .env
 |---|---|
 | `LLM_PROVIDER` | Proveedor a usar: `openai`, `anthropic` o `gemini`. Por defecto: `gemini` |
 | `LLM_MODEL` | Modelo del proveedor elegido, por ejemplo `gemini-flash-lite-latest`, `gpt-4o-mini` o `claude-opus-5-5` |
+| `LLM_FALLBACK_MODEL` | Opcional (unidad 2). Modelo del mismo proveedor que se usa cuando falla el principal, por ejemplo `gemini-3.5-flash-lite` |
 | `GOOGLE_API_KEY` | API key de Gemini |
 | `OPENAI_API_KEY` | API key de OpenAI |
 | `ANTHROPIC_API_KEY` | API key de Anthropic |
@@ -96,11 +97,13 @@ Si la configuración está mal (proveedor no soportado, falta el modelo o la API
 python run_pipeline.py
 ```
 
-El script procesa tres textos de ejemplo con `process_text()` y muestra los logs de cada paso:
+El script tiene dos partes y muestra los logs de cada paso:
 
-1. **normal**: un log de error con varias tecnologías.
-2. **ambiguous**: un texto que habla de "la base de datos" y "el caché" sin decir cuáles (prueba de estrés).
-3. **non_technical**: un texto sin información técnica.
+1. **Single text (`ainvoke`)**: procesa un texto con `process_text()`.
+2. **Batch (`abatch`)**: procesa los tres textos de ejemplo a la vez con `process_texts()`:
+   - **normal**: un log de error con varias tecnologías.
+   - **ambiguous**: un texto que habla de "la base de datos" y "el caché" sin decir cuáles (prueba de estrés).
+   - **non_technical**: un texto sin información técnica.
 
 ### Ejemplo de salida
 
@@ -114,25 +117,30 @@ Para el caso `normal`:
 }
 ```
 
-Para los casos `ambiguous` y `non_technical`, el modelo devuelve una lista de tecnologías vacía, el validador la rechaza, la cadena reintenta tres veces y el script muestra el error sin cortarse:
+Para los casos `ambiguous` y `non_technical`, el modelo devuelve una lista de tecnologías vacía, el validador la rechaza y la cadena reintenta tres veces. En el lote, el error ocupa el lugar de ese texto y los demás resultados no se pierden:
 
 ```
 WARNING pipeline.chain: The response was invalid. Retry
 WARNING pipeline.chain: The response was invalid. Retry
 WARNING pipeline.chain: The response was invalid. Retry
-Extraction failed: Failed to parse TechnicalEntities ... At least one specific technology is required
+--- ambiguous ---
+Extraction failed: Failed to parse TechnicalEntities from completion {"technologies": [], ...
 ```
 
 ### Uso desde código
 
 ```python
-from pipeline.chain import process_text
+from pipeline.chain import process_text, process_texts
 
 entities = await process_text("SQL Server está caído")
 print(entities.model_dump_json(by_alias=True, indent=2))
+
+results = await process_texts(["SQL Server está caído", "Redis responde lento"])
 ```
 
-`process_text()` devuelve un `TechnicalEntities`. Con `by_alias=True`, las claves del JSON salen en castellano.
+- `process_text()` devuelve un `TechnicalEntities`, o lanza el error si la extracción falla.
+- `process_texts()` devuelve una lista en el mismo orden que los textos. Cada elemento es un `TechnicalEntities` o el error de ese texto.
+- Con `by_alias=True`, las claves del JSON salen en castellano.
 
 ### Diseño
 
@@ -143,7 +151,15 @@ print(entities.model_dump_json(by_alias=True, indent=2))
 - **Resiliencia**:
   - Los errores de validación (`OutputParserException`, `ValidationError`) se reintentan.
   - `check_output()` revisa el `finish_reason` de la respuesta. Si el modelo cortó la respuesta por llegar a `max_tokens`, lanza `IncompleteOutputError` sin reintentar, porque con el mismo límite se cortaría de nuevo.
-- **Logs**: `logging` muestra el inicio de cada procesamiento, cada respuesta inválida antes de un reintento, las respuestas cortadas y las validaciones correctas.
+  - Si está configurado `LLM_FALLBACK_MODEL`, la cadena usa `.with_fallbacks()`: cuando el modelo principal falla por un error del proveedor (servidor caído, rate limit, timeout o conexión), repite el pedido con el modelo alternativo. Los errores de validación no pasan al modelo alternativo.
+- **Lote**: `process_texts()` usa `.abatch()` con `max_concurrency=5`, para no superar el rate limit del proveedor, y `return_exceptions=True`, para que un texto con error no corte el lote.
+- **Logs**: `logging` muestra el inicio de cada procesamiento, el modelo alternativo configurado, cada respuesta inválida antes de un reintento, las respuestas cortadas y las validaciones correctas.
+
+### Qué agregué además de la consigna
+
+- `process_texts()` con `.abatch()` para procesar varios textos a la vez.
+- Modelo alternativo con `.with_fallbacks()`.
+- Detección de respuestas cortadas por `max_tokens` (`finish_reason`).
 
 ## Estructura del proyecto
 
@@ -166,11 +182,12 @@ llm-client/
 └── pipeline/                     # Procesamiento de textos
     ├── schemas.py                # TechnicalEntities y CriticalityLevel
     ├── prompts.py                # EXTRACTION_PROMPT
-    └── chain.py                  # Cadena LCEL, check_output() y process_text()
+    └── chain.py                  # Cadena LCEL, check_output(), process_text() y process_texts()
 ```
 
 ## Notas
 
 - Gemini lo probé con la API real. OpenAI y Anthropic los probé con API keys inválidas y respuestas simuladas, porque no tengo keys pagas de esos proveedores.
-- Anthropic no recibe `temperature`, porque los modelos actuales de Claude ya no lo aceptan.
+- Anthropic no recibe `temperature`, porque los modelos actuales de Claude ya no lo aceptan. Lo mismo pasa con `gemini-3.5-flash-lite`, el modelo alternativo del ejemplo: ignora `temperature` y avisa con un `UserWarning`.
+- El modelo alternativo lo probé forzando un timeout de 0.01 segundos en el modelo principal: la cadena respondió con `gemini-3.5-flash-lite`.
 - La regla "al menos una tecnología" está en un `field_validator` y no en `Field(min_length=1)`. Con `min_length`, la regla viaja en el esquema que recibe el modelo, y Gemini la cumple a la fuerza: ante un texto sin tecnologías inventaba valores como "Desconocido". Con el validador, el modelo puede devolver la lista vacía y el rechazo lo hace el código.
