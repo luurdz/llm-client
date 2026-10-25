@@ -21,4 +21,5 @@ def load_config() -> LLMConfig:
         model=os.getenv("LLM_MODEL"),
         api_key=api_key,
         fallback_model=os.getenv("LLM_FALLBACK_MODEL") or None,
+        embedding_model=os.getenv("EMBEDDING_MODEL") or None,
     )

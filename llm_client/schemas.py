@@ -21,6 +21,7 @@ class LLMConfig(BaseModel):
     api_key: SecretStr = Field(min_length=1)
     timeout: float = Field(default=30, gt=0)
     fallback_model: NotEmptyStr | None = None
+    embedding_model: NotEmptyStr | None = None
 
 
 class ModelResponse(BaseModel):

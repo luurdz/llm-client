@@ -8,3 +8,7 @@ langchain-core
 langchain-openai
 langchain-anthropic
 langchain-google-genai
+chromadb
+langchain-chroma
+langchain-text-splitters
+tiktoken
