@@ -11,10 +11,11 @@ from rag.vectorstore import get_vectorstore
 
 DATA_DIR = Path("data")
 
+
 async def main():
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
-        )
+    )
     logging.getLogger("google_genai").setLevel(logging.WARNING)
 
     load_dotenv()
@@ -33,5 +34,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-

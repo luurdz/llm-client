@@ -12,6 +12,7 @@ DOCUMENT_FOOTER = "Rumbo Sur Viajes · Documento interno · Versión 2026.2"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
+
 def clean_text(text: str) -> str:
     text = text.replace(DOCUMENT_FOOTER, "")
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -32,7 +33,7 @@ def split_documents(documents: list[Document]) -> list[Document]:
         encoding_name="cl100k_base",
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
-        )
+    )
     return splitter.split_documents(documents)
 
 

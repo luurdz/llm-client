@@ -32,9 +32,8 @@ def build_embeddings(config: LLMConfig) -> Embeddings:
         "model": config.embedding_model,
         "timeout": config.timeout,
         "api_key": config.api_key,
-        }
+    }
     return model_class(**params)
-
 
 
 def build_chat_model(config: LLMConfig) -> BaseChatModel:

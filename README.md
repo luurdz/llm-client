@@ -4,8 +4,9 @@ Proyecto integrador del curso de AI Engineering. Cada unidad suma una parte sobr
 
 - **Unidad 1 — Cliente asíncrono de LLMs** (`llm_client/`, `main.py`): interfaz común para OpenAI, Anthropic y Gemini, con respuestas normales y en streaming, validación de la configuración con Pydantic y errores controlados.
 - **Unidad 2 — Pipeline de procesamiento validado** (`pipeline/`, `run_pipeline.py`): pipeline con LangChain (LCEL) que extrae información técnica de un texto (un log de error o una descripción de arquitectura) y devuelve un objeto validado con Pydantic.
+- **Unidad 3 — Sistema RAG local** (`rag/`, `run_ingest.py`, `run_rag.py`, `data/`): responde preguntas sobre los documentos de una agencia de viajes ficticia usando solo esos documentos, guardados en una base vectorial local (ChromaDB). Si la respuesta no está en los documentos, responde "No lo sé".
 
-La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1) y unidad 2 en la rama [`entrega-2`](https://github.com/luurdz/llm-client/tree/entrega-2).
+La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1), unidad 2 en la rama [`entrega-2`](https://github.com/luurdz/llm-client/tree/entrega-2) y unidad 3 en la rama [`entrega-3`](https://github.com/luurdz/llm-client/tree/entrega-3).
 
 ## Requisitos
 
@@ -40,7 +41,7 @@ pip install -r requirements.txt
 
 ## Configuración
 
-Las dos unidades usan el mismo `.env`. Copiar `.env.example` a `.env` y completar la API key del proveedor que se va a usar.
+Todas las unidades usan el mismo `.env`. Copiar `.env.example` a `.env` y completar la API key del proveedor que se va a usar.
 
 Windows (PowerShell):
 
@@ -59,6 +60,7 @@ cp .env.example .env
 | `LLM_PROVIDER` | Proveedor a usar: `openai`, `anthropic` o `gemini`. Por defecto: `gemini` |
 | `LLM_MODEL` | Modelo del proveedor elegido, por ejemplo `gemini-flash-lite-latest`, `gpt-4o-mini` o `claude-opus-5-5` |
 | `LLM_FALLBACK_MODEL` | Opcional (unidad 2). Modelo del mismo proveedor que se usa cuando falla el principal, por ejemplo `gemini-3.5-flash-lite` |
+| `EMBEDDING_MODEL` | Unidad 3. Modelo de embeddings del proveedor elegido: `gemini-embedding-001` (Gemini) o `text-embedding-3-small` (OpenAI). Anthropic no tiene modelo de embeddings |
 | `GOOGLE_API_KEY` | API key de Gemini |
 | `OPENAI_API_KEY` | API key de OpenAI |
 | `ANTHROPIC_API_KEY` | API key de Anthropic |
@@ -161,18 +163,105 @@ results = await process_texts(["SQL Server está caído", "Redis responde lento"
 - Modelo alternativo con `.with_fallbacks()`.
 - Detección de respuestas cortadas por `max_tokens` (`finish_reason`).
 
+## Unidad 3 — Sistema RAG local
+
+El sistema tiene dos pasos: primero se indexan los documentos de `data/` y después se hacen las preguntas.
+
+### 1. Ingesta
+
+```bash
+python run_ingest.py
+```
+
+Lee los archivos `.md` de `data/`, los limpia, los corta en fragmentos y los guarda con sus embeddings en una base ChromaDB local, en `vectorstore/`. Si la base ya tiene datos, no vuelve a indexar:
+
+```
+INFO rag.ingest: Indexed 12 chunks                                   ← primera ejecución
+INFO rag.ingest: Vector store already has data, skipping indexing    ← siguientes ejecuciones
+```
+
+Para volver a indexar desde cero (por ejemplo, después de cambiar los documentos o el modelo de embeddings), borrar la carpeta `vectorstore/` y correr el script de nuevo.
+
+### 2. Preguntas
+
+```bash
+python run_rag.py
+```
+
+Hace dos preguntas cuya respuesta está en los documentos y dos "preguntas trampa" cuya respuesta no está. Resultado:
+
+```
+=== Kind: in_context ===
+Question: ¿Cuánto me devuelven si cancelo un paquete de 2.000 dólares 20 días antes?
+Answer: Si cancelas un paquete de 2.000 dólares 20 días antes de la salida, recibes un reembolso de 1.400 dólares, es decir, el 70%.
+Sources: ['politica_de_cancelacion.md']
+Question: ¿Puedo llevar un power bank en la valija despachada?
+Answer: No, las baterías de litio y los cargadores portátiles (power banks) deben viajar siempre en el equipaje de mano, nunca en la valija despachada.
+Sources: ['equipaje_y_checkin.md']
+
+=== Kind: trap ===
+Question: ¿Qué vacunas necesito para viajar a Kenia?
+Answer: No lo sé
+Sources: []
+Question: ¿Tienen paquetes a Tokio?
+Answer: No lo sé
+Sources: []
+```
+
+Los logs muestran, para cada pregunta, de qué archivos son los fragmentos que encontró la búsqueda.
+
+### Uso desde código
+
+```python
+from rag.chain import get_rag_response
+
+response = await get_rag_response("¿Qué plan de seguro cubre la cancelación por enfermedad?")
+print(response.answer)    # Solo el plan Premium incluye la cancelación por enfermedad.
+print(response.sources)   # ['seguro_de_viaje.md']
+```
+
+### Dataset
+
+`data/` tiene cuatro documentos de una agencia de viajes ficticia, Rumbo Sur Viajes: política de cancelación, equipaje y check-in, seguro de viaje, y paquetes y destinos. Los datos son inventados, así que el modelo no los conoce de antemano: si responde bien, es porque los sacó de los documentos.
+
+### Diseño
+
+- **Ingesta** (`rag/ingest.py`):
+  - `clean_text()` saca el encabezado que se repite en los documentos y los saltos de línea de más.
+  - `split_documents()` usa `RecursiveCharacterTextSplitter` medido en tokens con `tiktoken`: fragmentos de hasta 500 tokens con 50 de solapamiento, cortando primero por párrafos. Los cuatro documentos quedan en 12 fragmentos.
+  - Cada fragmento guarda el nombre de su archivo en los metadatos (`source`), que después se usa para citar las fuentes.
+  - `index_documents()` usa IDs fijos (`archivo-número`) y no indexa si la base ya tiene datos.
+- **Base vectorial** (`rag/vectorstore.py`): ChromaDB persistente en `vectorstore/`, con similitud coseno (por defecto Chroma usa distancia euclídea). La ingesta y las preguntas abren la base con la misma función, `get_vectorstore()`, así que usan siempre el mismo modelo de embeddings.
+- **Embeddings** (`llm_client/langchain_models.py`): `build_embeddings()` crea `GoogleGenerativeAIEmbeddings` u `OpenAIEmbeddings` según el proveedor, con el modelo de `EMBEDDING_MODEL`.
+- **Recuperación**: el retriever trae los 4 fragmentos más parecidos a la pregunta (`TOP_K = 4`).
+- **Cadena** (`rag/chain.py`):
+
+  ```python
+  {"context": retriever | format_docs, "question": RunnablePassthrough()}
+  | prompt | model | PydanticOutputParser(RagResponse)
+  ```
+
+  `format_docs()` arma el contexto con el nombre del archivo de cada fragmento, y la cadena tiene `.with_retry()` de hasta 3 intentos si el JSON de la respuesta no es válido.
+- **Prompt** (`rag/prompts.py`): el modelo responde solo con la información del contexto. Si la respuesta no está, responde exactamente "No lo sé", con la lista de fuentes vacía, aunque conozca la respuesta. La búsqueda siempre trae 4 fragmentos, aunque ninguno tenga la respuesta, así que la decisión de responder o no la toma el modelo.
+- **Respuesta** (`rag/schemas.py`): `RagResponse` con `answer` y `sources` (los archivos que el modelo usó para responder).
+- **Async**: `get_rag_response()` ejecuta la cadena con `ainvoke`. La búsqueda y la llamada al modelo son asíncronas.
+
 ## Estructura del proyecto
 
 ```
 llm-client/
 ├── main.py                       # Unidad 1: script de prueba del cliente
 ├── run_pipeline.py               # Unidad 2: script de prueba del pipeline
+├── run_ingest.py                 # Unidad 3: ingesta de los documentos en ChromaDB
+├── run_rag.py                    # Unidad 3: preguntas al sistema RAG
 ├── requirements.txt
 ├── .env.example                  # Plantilla de variables de entorno (compartida)
+├── data/                         # Unidad 3: documentos de la agencia de viajes ficticia
+├── vectorstore/                  # Unidad 3: base ChromaDB (la crea run_ingest.py, no se sube a git)
 ├── llm_client/                   # Conexión con los proveedores
 │   ├── config.py                 # load_config(): arma LLMConfig desde el .env
 │   ├── schemas.py                # Modelos de Pydantic: ChatMessage, LLMConfig, ModelResponse, StreamChunk
-│   ├── langchain_models.py       # build_chat_model(): modelo de LangChain según el proveedor
+│   ├── langchain_models.py       # build_chat_model() y build_embeddings(): modelos de LangChain según el proveedor
 │   ├── manager.py                # AsyncLLMManager: crea el cliente del proveedor configurado
 │   └── clients/
 │       ├── base.py               # BaseLLMClient: clase base abstracta
@@ -183,6 +272,12 @@ llm-client/
     ├── schemas.py                # TechnicalEntities y CriticalityLevel
     ├── prompts.py                # EXTRACTION_PROMPT
     └── chain.py                  # Cadena LCEL, check_output(), process_text() y process_texts()
+└── rag/                          # Sistema RAG
+    ├── ingest.py                 # Limpieza, chunking e indexación
+    ├── vectorstore.py            # get_vectorstore() y get_retriever()
+    ├── schemas.py                # RagResponse
+    ├── prompts.py                # RAG_PROMPT
+    └── chain.py                  # Cadena RAG y get_rag_response()
 ```
 
 ## Notas
@@ -190,4 +285,5 @@ llm-client/
 - Gemini lo probé con la API real. OpenAI y Anthropic los probé con API keys inválidas y respuestas simuladas, porque no tengo keys pagas de esos proveedores.
 - Anthropic no recibe `temperature`, porque los modelos actuales de Claude ya no lo aceptan. Lo mismo pasa con `gemini-3.5-flash-lite`, el modelo alternativo del ejemplo: ignora `temperature` y avisa con un `UserWarning`.
 - El modelo alternativo lo probé forzando un timeout de 0.01 segundos en el modelo principal: la cadena respondió con `gemini-3.5-flash-lite`.
+- El sistema RAG lo probé con Gemini (`gemini-embedding-001` para los embeddings). Con OpenAI debería funcionar cambiando `LLM_PROVIDER`, `LLM_MODEL` y `EMBEDDING_MODEL`, pero no lo probé.
 - La regla "al menos una tecnología" está en un `field_validator` y no en `Field(min_length=1)`. Con `min_length`, la regla viaja en el esquema que recibe el modelo, y Gemini la cumple a la fuerza: ante un texto sin tecnologías inventaba valores como "Desconocido". Con el validador, el modelo puede devolver la lista vacía y el rechazo lo hace el código.
