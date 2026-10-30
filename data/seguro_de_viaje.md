@@ -1,3 +1,7 @@
+---
+category: seguros
+---
+
 # Seguro de viaje
 
 Rumbo Sur Viajes · Documento interno · Versión 2026.2

@@ -1,3 +1,7 @@
+---
+category: equipaje
+---
+
 # Equipaje y check-in
 
 Rumbo Sur Viajes · Documento interno · Versión 2026.2

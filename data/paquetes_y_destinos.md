@@ -1,3 +1,7 @@
+---
+category: paquetes
+---
+
 # Paquetes y destinos
 
 Rumbo Sur Viajes · Documento interno · Versión 2026.2

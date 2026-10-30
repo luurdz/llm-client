@@ -12,3 +12,8 @@ chromadb
 langchain-chroma
 langchain-text-splitters
 tiktoken
+pinecone
+rank-bm25
+langchain-community
+langchain-classic
+pytest

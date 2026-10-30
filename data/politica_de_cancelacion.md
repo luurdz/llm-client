@@ -1,3 +1,7 @@
+---
+category: cancelaciones
+---
+
 # Política de cancelación y reembolsos
 
 Rumbo Sur Viajes · Documento interno · Versión 2026.2
