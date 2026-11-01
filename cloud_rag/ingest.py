@@ -2,13 +2,17 @@ import hashlib
 from pathlib import Path
 
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
     RecursiveCharacterTextSplitter,
 )
+from pinecone import Index
 
 from cloud_rag.schemas import ChunkMetadata
 from rag.ingest import CHUNK_OVERLAP, CHUNK_SIZE, clean_text
+
+BATCH_SIZE = 20
 
 
 def load_documents(data_dir: Path) -> list[Document]:
@@ -52,3 +56,16 @@ def build_chunk_metadata(chunks: list[Document]) -> list[ChunkMetadata]:
         text = chunk.page_content
         results.append(ChunkMetadata(source=source, category=category, section=section, chunk_index=chunk_index, content_hash=content_hash, text=text))
     return results
+
+
+def upsert_chunks(index: Index, embeddings: Embeddings, metas: list[ChunkMetadata], namespace: str) -> int:
+    for start in range(0, len(metas), BATCH_SIZE):
+        batch = metas[start:start + BATCH_SIZE]
+        texts = [meta.text for meta in batch]
+        vectors = embeddings.embed_documents(texts)
+        records = []
+        for meta, vector in zip(batch, vectors):
+            records.append({"id": f"{meta.source}-{meta.chunk_index}", "values": vector, "metadata": meta.model_dump()})
+        index.upsert(vectors=records, namespace=namespace)
+    return len(metas)
+
