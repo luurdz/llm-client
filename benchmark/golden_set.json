@@ -1,0 +1,22 @@
+[
+  {
+    "pregunta": "¿Qué significa el error RS-2210 en Brújula?",
+    "documento_id_esperado": "manual_sistema_de_reservas.md"
+  },
+  {
+    "pregunta": "¿Cuánto peso puedo despachar en el avión?",
+    "documento_id_esperado": "equipaje_y_checkin.md"
+  },
+  {
+    "pregunta": "Si pago con una tarjeta del exterior, ¿qué factura recibo?",
+    "documento_id_esperado": "pagos_y_facturacion.md"
+  },
+  {
+    "pregunta": "Me robaron el pasaporte durante el viaje, ¿qué hago?",
+    "documento_id_esperado": "emergencias_durante_el_viaje.md"
+  },
+  {
+    "pregunta": "¿Cuántos puntos necesito para llegar al nivel Oro?",
+    "documento_id_esperado": "programa_de_fidelidad.md"
+  }
+]

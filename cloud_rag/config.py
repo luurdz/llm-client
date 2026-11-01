@@ -20,4 +20,3 @@ def load_pinecone_settings() -> PineconeSettings:
     if not namespace:
         raise ValueError("PINECONE_NAMESPACE is not set in the .env file")
     return PineconeSettings(api_key=api_key, index_name=index_name, namespace=namespace)
-

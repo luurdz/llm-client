@@ -57,8 +57,10 @@ def build_chunk_metadata(chunks: list[Document]) -> list[ChunkMetadata]:
         results.append(ChunkMetadata(source=source, category=category, section=section, chunk_index=chunk_index, content_hash=content_hash, text=text))
     return results
 
+
 def chunk_id(meta: ChunkMetadata) -> str:
     return f"{meta.source}-{meta.chunk_index}"
+
 
 def fetch_existing_hashes(index: Index, namespace: str) -> dict[str, str]:
     hashes = {}

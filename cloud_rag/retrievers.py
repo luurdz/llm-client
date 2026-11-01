@@ -63,5 +63,3 @@ class PineconeRetriever(BaseRetriever):
             doc.metadata["score"] = score
             documents.append(doc)
         return documents
-
-
