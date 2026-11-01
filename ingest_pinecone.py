@@ -10,6 +10,8 @@ from cloud_rag.ingest import (
     load_documents,
     split_documents,
     upsert_chunks,
+    fetch_existing_hashes,
+    plan_changes
 )
 from llm_client.config import load_config
 from llm_client.langchain_models import build_embeddings
@@ -26,14 +28,23 @@ def main():
     except (ValueError, ValidationError) as e:
         print(f"Configuration error: {e}")
         return
-    
+
     documents = load_documents(DATA_DIR)
     chunks = split_documents(documents=documents)
     metas = build_chunk_metadata(chunks=chunks)
     pc = Pinecone(api_key=pinecone_settings.api_key)
     index = pc.index(pinecone_settings.index_name)
-    count = upsert_chunks(index=index, embeddings=embeddings, metas=metas, namespace=pinecone_settings.namespace)
-    print(f"Chunks uploaded: {count}")
+
+    existing = fetch_existing_hashes(index=index, namespace=pinecone_settings.namespace)
+    to_upsert, to_delete = plan_changes(metas=metas, existing=existing)
+
+    upsert_chunks(index=index, embeddings=embeddings, metas=to_upsert, namespace=pinecone_settings.namespace)
+
+    if to_delete:
+        index.delete(ids=to_delete, namespace=pinecone_settings.namespace)
+
+    unchanged = len(metas) - len(to_upsert)
+    print(f"Upserted: {len(to_upsert)}, Deleted: {len(to_delete)}, Unchanged: {unchanged}")
 
 
 if __name__ == "__main__":

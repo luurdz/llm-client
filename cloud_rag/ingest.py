@@ -57,6 +57,18 @@ def build_chunk_metadata(chunks: list[Document]) -> list[ChunkMetadata]:
         results.append(ChunkMetadata(source=source, category=category, section=section, chunk_index=chunk_index, content_hash=content_hash, text=text))
     return results
 
+def chunk_id(meta: ChunkMetadata) -> str:
+    return f"{meta.source}-{meta.chunk_index}"
+
+def fetch_existing_hashes(index: Index, namespace: str) -> dict[str, str]:
+    hashes = {}
+    for page in index.list(namespace=namespace):
+        ids = [item.id for item in page]
+        response = index.fetch(ids=ids, namespace=namespace)
+        for vector_id, vector in response.vectors.items():
+            hashes[vector_id] = vector.metadata["content_hash"]
+    return hashes
+
 
 def upsert_chunks(index: Index, embeddings: Embeddings, metas: list[ChunkMetadata], namespace: str) -> int:
     for start in range(0, len(metas), BATCH_SIZE):
@@ -65,7 +77,19 @@ def upsert_chunks(index: Index, embeddings: Embeddings, metas: list[ChunkMetadat
         vectors = embeddings.embed_documents(texts)
         records = []
         for meta, vector in zip(batch, vectors):
-            records.append({"id": f"{meta.source}-{meta.chunk_index}", "values": vector, "metadata": meta.model_dump()})
+            records.append({"id": chunk_id(meta=meta), "values": vector, "metadata": meta.model_dump()})
         index.upsert(vectors=records, namespace=namespace)
     return len(metas)
 
+
+def plan_changes(metas: list[ChunkMetadata], existing: dict[str, str]) -> tuple[list[ChunkMetadata], list[str]]:
+    to_upsert = []
+    for meta in metas:
+        cid = chunk_id(meta=meta)
+        if cid not in existing or existing[cid] != meta.content_hash:
+            to_upsert.append(meta)
+
+    local_ids = {chunk_id(meta) for meta in metas}
+    to_delete = [cid for cid in existing if cid not in local_ids]
+
+    return to_upsert, to_delete
