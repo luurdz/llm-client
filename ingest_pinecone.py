@@ -7,11 +7,11 @@ from pydantic import ValidationError
 from cloud_rag.config import load_pinecone_settings
 from cloud_rag.ingest import (
     build_chunk_metadata,
+    fetch_existing_hashes,
     load_documents,
+    plan_changes,
     split_documents,
     upsert_chunks,
-    fetch_existing_hashes,
-    plan_changes
 )
 from llm_client.config import load_config
 from llm_client.langchain_models import build_embeddings
