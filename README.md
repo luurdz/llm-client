@@ -294,7 +294,7 @@ Upserted: 1, Deleted: 0, Unchanged: 46    ← después de editar una frase de un
 
 - **Carga**: cada documento de `data/` empieza con un front matter (`category: <categoría>`). `load_documents()` lo lee, lo quita del texto y lo guarda como metadato.
 - **Chunking**: `MarkdownHeaderTextSplitter` corta por las secciones `##` y guarda el título en `section`. Después, el mismo `RecursiveCharacterTextSplitter` de la unidad 3 (500 tokens, 50 de solapamiento) corta las secciones largas. Los 8 documentos quedan en 47 chunks.
-- **Metadatos**: `ChunkMetadata` (Pydantic) define el esquema fijo de cada vector: `source`, `category` (una de las 8 categorías), `section`, `chunk_index`, `content_hash` (SHA-256 del texto) y `text` (el texto original). Pinecone no tiene esquema, así que validar antes de subir evita metadatos inconsistentes.
+- **Metadatos**: `ChunkMetadata` (Pydantic) define el esquema fijo de cada vector: `source`, `category` (una de las 8 categorías), `section`, `chunk_index`, `content_hash` (SHA-256 del texto) y `text` (el texto original). Pinecone no tiene esquema, así que validar antes de subir evita metadatos inconsistentes. Los documentos son Markdown y no tienen páginas: `section` cumple el rol de la página, porque indica en qué parte del documento está el chunk.
 - **IDs**: `archivo-número`, por ejemplo `pagos_y_facturacion.md-3`. Con el mismo ID, el upsert reemplaza el vector en lugar de duplicarlo.
 - **Lotes**: los vectores se suben de a 20. Con 3072 dimensiones, un lote ocupa unos 1,4 MB, por debajo del límite de 2 MB por pedido de Pinecone.
 - **Namespace**: todo se guarda en el namespace de `PINECONE_NAMESPACE`, así se pueden separar entornos (`dev`, `prod`) en el mismo índice.
