@@ -4,10 +4,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
+from cloud_rag.ingest import load_chunk_metas
 from pinecone import Pinecone
 from pydantic import ValidationError
 
-from cloud_rag.config import load_pinecone_settings
+from cloud_rag.connection import connect_pinecone
 from cloud_rag.ingest import build_chunk_metadata, load_documents, split_documents
 from cloud_rag.rag_system import RAGSystem
 from cloud_rag.retrievers import PineconeRetriever, build_bm25_retriever
@@ -50,18 +51,15 @@ def evaluate_retriever(retrieve: Callable[[str], list[Document]], golden_set: li
 def main():
     load_dotenv()
     try:
-        pinecone_settings = load_pinecone_settings()
-        config = load_config()
-        embeddings = build_embeddings(config)
+        index, embeddings, namespace = connect_pinecone()
     except (ValueError, ValidationError) as e:
         print(f"Configuration error: {e}")
         return
 
-    metas = build_chunk_metadata(split_documents(load_documents(DATA_DIR)))
-    pc = Pinecone(api_key=pinecone_settings.api_key)
-    index = pc.index(pinecone_settings.index_name)
-    rag = RAGSystem(index=index, embeddings=embeddings, namespace=pinecone_settings.namespace, metas=metas, top_k=TOP_K)
-    pinecone_retriever = PineconeRetriever(index=index, embeddings=embeddings, namespace=pinecone_settings.namespace, top_k=TOP_K)
+    metas = load_chunk_metas(DATA_DIR)
+
+    rag = RAGSystem(index=index, embeddings=embeddings, namespace=namespace, metas=metas, top_k=TOP_K)
+    pinecone_retriever = PineconeRetriever(index=index, embeddings=embeddings, namespace=namespace, top_k=TOP_K)
     bm25 = build_bm25_retriever(metas, TOP_K)
     golden_set = load_golden_set(GOLDEN_SET_PATH)
 

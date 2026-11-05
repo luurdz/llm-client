@@ -95,3 +95,9 @@ def plan_changes(metas: list[ChunkMetadata], existing: dict[str, str]) -> tuple[
     to_delete = [cid for cid in existing if cid not in local_ids]
 
     return to_upsert, to_delete
+
+
+def load_chunk_metas(data_dir: Path) -> list[ChunkMetadata]:
+    metas = build_chunk_metadata(split_documents(load_documents(data_dir)))
+    return metas
+
