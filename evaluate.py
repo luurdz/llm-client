@@ -4,16 +4,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
-from cloud_rag.ingest import load_chunk_metas
-from pinecone import Pinecone
 from pydantic import ValidationError
 
 from cloud_rag.connection import connect_pinecone
-from cloud_rag.ingest import build_chunk_metadata, load_documents, split_documents
+from cloud_rag.ingest import load_chunk_metas
 from cloud_rag.rag_system import RAGSystem
 from cloud_rag.retrievers import PineconeRetriever, build_bm25_retriever
-from llm_client.config import load_config
-from llm_client.langchain_models import build_embeddings
 
 DATA_DIR = Path("data")
 GOLDEN_SET_PATH = Path("benchmark/golden_set.json")
