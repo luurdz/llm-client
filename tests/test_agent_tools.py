@@ -1,4 +1,7 @@
+import asyncio
+
 import pytest
+from langchain_core.documents import Document
 
 from agent.tools import make_tools
 
@@ -69,3 +72,47 @@ def test_transient_error_counter_is_per_tool_instance():
     result = get_booking_tool().invoke({"locator": "RSV3P8"})
 
     assert "RS-3100" in result
+
+
+class FakeRAG:
+    """RAGSystem replacement that returns fixed documents and records the queries."""
+
+    def __init__(self, documents: list[Document]):
+        self.documents = documents
+        self.queries: list[str] = []
+
+    def retrieve(self, question: str) -> list[Document]:
+        self.queries.append(question)
+        return self.documents
+
+
+def search_tool(rag):
+    """New search_documentation tool over the given RAG."""
+    return make_tools(rag)[1]
+
+
+def test_search_tool_has_name_and_description():
+    search = search_tool(FakeRAG([]))
+
+    assert search.name == "search_documentation"
+    assert "RS-" in search.description
+
+
+def test_search_returns_fragments_with_source():
+    rag = FakeRAG([
+        Document(page_content="RS-2210 documento inválido.", metadata={"source": "codigos_error.md"}),
+        Document(page_content="Validar el pasaporte.", metadata={"source": "manual_sistema_de_reservas.md"}),
+    ])
+
+    result = asyncio.run(search_tool(rag).ainvoke({"query": "error RS-2210"}))
+
+    assert rag.queries == ["error RS-2210"]
+    assert "[codigos_error.md] RS-2210 documento inválido." in result
+    assert "[manual_sistema_de_reservas.md] Validar el pasaporte." in result
+
+
+def test_search_without_results_returns_message():
+    result = asyncio.run(search_tool(FakeRAG([])).ainvoke({"query": "error RS-9999"}))
+
+    assert "RS-9999" in result
+    assert "documentación" in result
