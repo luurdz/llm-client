@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, messages_to_dict
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.errors import GraphRecursionError
+from langgraph.graph.state import CompiledStateGraph
 from pydantic import ValidationError
 
 from agent.graph import build_agent_graph, build_llm
@@ -21,7 +22,7 @@ MEMORY_PATH = "agent_memory.sqlite"
 TRACE_PATH = Path("traces/agent_trace.json")
 RECURSION_LIMIT = 10
 
-async def ask(app, thread_id: str, question: str, recursion_limit: int = RECURSION_LIMIT) -> list:
+async def ask(app: CompiledStateGraph, thread_id: str, question: str, recursion_limit: int = RECURSION_LIMIT) -> list:
     config = {"configurable": {"thread_id": thread_id}, "recursion_limit": recursion_limit}
     messages_before = len((await app.aget_state(config)).values.get("messages", []))
     print(f"Question: {question}")
@@ -35,7 +36,7 @@ async def ask(app, thread_id: str, question: str, recursion_limit: int = RECURSI
     return result["messages"]
 
 
-async def main():
+async def main() -> None:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
