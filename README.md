@@ -6,6 +6,7 @@ Proyecto integrador del curso de AI Engineering. Cada unidad suma una parte sobr
 - **Unidad 2 — Pipeline de procesamiento validado** (`pipeline/`, `run_pipeline.py`): pipeline con LangChain (LCEL) que extrae información técnica de un texto (un log de error o una descripción de arquitectura) y devuelve un objeto validado con Pydantic.
 - **Unidad 3 — Sistema RAG local** (`rag/`, `run_ingest.py`, `run_rag.py`, `data/`): responde preguntas sobre los documentos de una agencia de viajes ficticia usando solo esos documentos, guardados en una base vectorial local (ChromaDB). Si la respuesta no está en los documentos, responde "No lo sé".
 - **Unidad 4 — Sistema RAG escalable en la nube** (`cloud_rag/`, `setup_pinecone.py`, `ingest_pinecone.py`, `evaluate.py`, `benchmark/`, `tests/`): los mismos documentos en un índice serverless de Pinecone, con ingesta incremental, búsqueda híbrida (BM25 + vectorial con `EnsembleRetriever`) y evaluación con Recall@5 y Precision@5.
+- **Unidad 5 — Agente ReAct con LangGraph** (`agent/`, `run_agent.py`, `traces/`): agente que consulta reservas simuladas y busca en los manuales con el RAG de la unidad 4, con reintento, pedido de aclaración, `recursion_limit` y memoria por conversación en SQLite.
 
 La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1), unidad 2 en la rama [`entrega-2`](https://github.com/luurdz/llm-client/tree/entrega-2), unidad 3 en la rama [`entrega-3`](https://github.com/luurdz/llm-client/tree/entrega-3) y unidad 4 en el tag [`unidad-4`](https://github.com/luurdz/llm-client/tree/unidad-4).
 
@@ -422,6 +423,112 @@ Los tests verifican que las preguntas del dominio superan 0.65 y las de afuera n
 
 A los cuatro documentos de la unidad 3 se sumaron cuatro más: manual del sistema de reservas Brújula (estados de reserva y códigos de error `RS-`), programa de fidelidad Millas Sur, pagos y facturación, y emergencias durante el viaje (protocolos `PRT-`). Los nuevos tienen códigos y nombres propios para probar la búsqueda por palabras exactas. Todos tienen un front matter con su categoría.
 
+## Unidad 5 — Agente ReAct con LangGraph
+
+Agente para los vendedores de Rumbo Sur: consulta reservas en un sistema simulado y busca en los manuales (el `RAGSystem` de la unidad 4) qué hacer ante cada código de error.
+
+### Evidencia por criterio de la rúbrica
+
+| Criterio | Archivos | Comando | Evidencia |
+|---|---|---|---|
+| Grafo y estado (30%) | `agent/graph.py` | `python run_agent.py` | [Grafo](#grafo) |
+| Tools y multi-paso (35%) | `agent/tools.py`, `agent/prompts.py`, `traces/agent_trace.json` | `python run_agent.py`, `pytest -v` | [Tools](#tools), [Escenarios](#escenarios) y [Traza](#traza) |
+| Memoria con SqliteSaver (20%) | `run_agent.py`, `tests/test_agent_graph.py` | `python run_agent.py` | [Memoria](#memoria) |
+| Repositorio (15%) | `README.md`, `.env.example`, `requirements.txt` | — | [Estructura del proyecto](#estructura-del-proyecto) |
+
+### Grafo
+
+`StateGraph` sobre `MessagesState`: el estado es la lista de mensajes y el reducer `add_messages` agrega cada mensaje nuevo. Nodo `model` (el LLM con `bind_tools` y el system prompt), nodo `tools` (`ToolNode`) y arista condicional `tools_condition`: si el modelo pidió una tool va a `tools`, si no termina. `tools → model` cierra el ciclo ReAct.
+
+```mermaid
+graph TD;
+	__start__([__start__]):::first
+	model(model)
+	tools(tools)
+	__end__([__end__]):::last
+	__start__ --> model;
+	model -.-> __end__;
+	model -.-> tools;
+	tools --> model;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+```
+
+### Tools
+
+- `get_booking(locator)`: consulta una reserva en una base simulada.
+- `search_documentation(query)`: busca en los manuales con el `RAGSystem` híbrido de la unidad 4.
+
+Reservas simuladas (`BOOKINGS` en `agent/tools.py`):
+
+| Localizador | Pasajero | Estado | Comportamiento |
+|---|---|---|---|
+| `RSV7K2` | Lucía Fernández | bloqueada | Error `RS-2210` (documento inválido) |
+| `RSV3P8` | Martín Gómez | confirmada | Devuelve `RS-3100` en la primera llamada |
+| `RSV5M4` | Sofía Ruiz | confirmada | Sin errores |
+
+Las tools devuelven los errores como texto, para que el modelo los lea y decida:
+
+- `RS-1001`: localizador con formato inválido (6 caracteres, sin I ni O) o inexistente. El agente pide que se verifique.
+- `RS-3100`: el proveedor no respondió. El agente reintenta una vez.
+
+### Escenarios
+
+`python run_agent.py` (salida recortada):
+
+```
+Question: La reserva RSV7K2 no me deja emitir, ¿qué hago?
+Tools: ['get_booking', 'search_documentation']
+La reserva RSV7K2 (pasajero: Lucía Fernández, vuelo Buenos Aires - Madrid) se encuentra bloqueada por el error RS-2210 (Documento inválido). ...
+Question: ¿En qué estado está la reserva RSV7I2?
+Tools: ['get_booking']
+El localizador RSV7I2 tiene un formato inválido (contiene la letra "I"). Por favor, verificá el localizador ...
+Question: ¿Está confirmada la reserva RSV3P8?
+Tools: ['get_booking', 'get_booking']
+La reserva RSV3P8 está confirmada. ...
+Question: ¿Y cómo se llama el pasajero?
+Tools: []
+El pasajero de la reserva RSV7K2 es Lucía Fernández.
+Question: ¿Y cómo se llama el pasajero?
+Tools: []
+Para decirte el nombre del pasajero, necesito que me indiques el localizador de la reserva. ¿Cuál es?
+20261107-120104-multipaso: 8 mensajes
+```
+
+| Escenario | Demuestra |
+|---|---|
+| `RSV7K2` | Varios pasos: consulta la reserva, encuentra `RS-2210` y busca en los manuales qué hacer |
+| `RSV7I2` | Pedido de aclaración ante un dato inválido |
+| `RSV3P8` | Reintento ante un error transitorio |
+| Segunda pregunta, mismo thread | Memoria de la conversación |
+| Misma pregunta, otro thread | Un thread nuevo empieza sin historia |
+| `recursion_limit=3` | El ciclo se corta con `GraphRecursionError` y el script sigue |
+
+### Memoria
+
+`AsyncSqliteSaver` guarda el estado después de cada paso en `agent_memory.sqlite` (no se sube a git). Cada escenario usa su propio `thread_id`, con la fecha y hora de la corrida adelante. La conversación queda en el archivo: otro proceso la puede leer después con `app.aget_state({"configurable": {"thread_id": ...}})`.
+
+### Traza
+
+`traces/agent_trace.json` guarda los mensajes de cada escenario, convertidos con `messages_to_dict`: el tipo (`human`, `ai`, `tool`), el contenido, los `tool_calls` de cada pedido y el `tool_call_id` de cada respuesta de tool.
+
+### Tests
+
+`tests/test_agent_tools.py` prueba las tools y `tests/test_agent_graph.py` prueba el grafo con un modelo falso (`GenericFakeChatModel`), sin llamar a Gemini: el reintento, el corte por `recursion_limit` y la memoria por thread.
+
+```bash
+pytest -v tests/test_agent_tools.py tests/test_agent_graph.py
+```
+
+### Diseño
+
+- Temperatura 0 en el modelo del agente, para que elija las tools de forma estable.
+- El `RAGSystem` se crea una sola vez y `make_tools(rag)` lo comparte con las tools.
+- Los errores se devuelven como texto y no como excepciones: así el modelo puede reintentar o pedir aclaración.
+- `connect_pinecone` y `load_chunk_metas` se comparten entre `run_agent.py`, `evaluate.py`, `ingest_pinecone.py` y los tests.
+- La consigna menciona OpenAI o Anthropic. Se usa Gemini porque `build_chat_model()` devuelve el proveedor configurado y los tres soportan `bind_tools`. En el plan gratuito de Gemini puede aparecer el error 429.
+
 ## Estructura del proyecto
 
 ```
@@ -434,10 +541,13 @@ llm-client/
 ├── ingest_pinecone.py            # Unidad 4: ingesta incremental en Pinecone
 ├── evaluate.py                   # Unidad 4: Recall@5 y Precision@5 de Pinecone, BM25 e híbrido
 ├── pytest.ini                    # Unidad 4: configuración de pytest
+├── run_agent.py                  # Unidad 5: escenarios del agente, memoria y traza
 ├── requirements.txt
 ├── .env.example                  # Plantilla de variables de entorno (compartida)
 ├── data/                         # Unidad 3: documentos de la agencia de viajes ficticia
 ├── vectorstore/                  # Unidad 3: base ChromaDB (la crea run_ingest.py, no se sube a git)
+├── agent_memory.sqlite           # Unidad 5: memoria del agente (la crea run_agent.py, no se sube a git)
+├── traces/agent_trace.json       # Unidad 5: traza ReAct de los escenarios
 ├── llm_client/                   # Conexión con los proveedores
 │   ├── config.py                 # load_config(): arma LLMConfig desde el .env
 │   ├── schemas.py                # Modelos de Pydantic: ChatMessage, LLMConfig, ModelResponse, StreamChunk
@@ -460,13 +570,18 @@ llm-client/
     └── chain.py                  # Cadena RAG y get_rag_response()
 └── cloud_rag/                    # Unidad 4: RAG en Pinecone
     ├── config.py                 # load_pinecone_settings(): variables de Pinecone del .env
+    ├── connection.py             # connect_pinecone(): índice, embeddings y namespace
     ├── schemas.py                # ChunkMetadata: esquema de los metadatos de cada vector
     ├── pinecone_index.py         # ensure_index(): crea o valida el índice
     ├── ingest.py                 # Carga, chunking, metadatos, upsert por lotes e ingesta incremental
     ├── retrievers.py             # search(), PineconeRetriever, tokenize() y BM25 sin relleno
     └── rag_system.py             # RAGSystem: EnsembleRetriever con BM25 y Pinecone
+└── agent/                        # Unidad 5: agente ReAct
+    ├── tools.py                  # make_tools(): get_booking y search_documentation
+    ├── prompts.py                # SYSTEM_PROMPT
+    └── graph.py                  # build_llm() y build_agent_graph()
 ├── benchmark/golden_set.json     # Unidad 4: 5 preguntas con su documento esperado
-└── tests/                        # Unidad 4: tests de pytest
+└── tests/                        # Unidades 4 y 5: tests de pytest
 ```
 
 ## Notas
