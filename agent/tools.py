@@ -14,6 +14,42 @@ BOOKINGS: dict[str, dict] = {
     "RSV5M4": {"passenger": "Sofía Ruiz", "product": "Hotel en Salta 3 noches", "status": "confirmada", "error": None},
 }
 
+
+def make_search_tool(rag: RAGSystem | None) -> BaseTool:
+    @tool
+    async def search_documentation(query: str) -> str:
+        """Busca en los manuales internos de Rumbo Sur: paquetes y destinos, precios y servicios opcionales,
+        política de cancelación, pagos y facturación, seguros, equipaje, programa de fidelidad
+        y sistema de reservas Brújula (incluye los códigos de error RS-xxxx).
+
+        Usala para obtener los datos de un paquete, una política o un procedimiento,
+        o cuando una reserva tenga un código de error RS-xxxx.
+
+        Args:
+            query: lo que hay que buscar, por ejemplo "paquete Cusco y Machu Picchu" o "error RS-2210".
+
+        Returns:
+            Fragmentos de los manuales, cada uno con el nombre del archivo entre corchetes.
+        """
+
+        if rag is None:
+            return "ERROR: la búsqueda en la documentación no está disponible."
+
+        try:
+            documents = await asyncio.to_thread(rag.retrieve, query)
+            if not documents:
+                return f"No encontré documentación para {query}"
+        except Exception as e:
+            return f"ERROR: la búsqueda falló ({e}). Intentá de nuevo."
+
+        result = []
+        for doc in documents:
+            result.append(f"[{doc.metadata['source']}] {doc.page_content}")
+
+        return "\n\n".join(result)
+    return search_documentation
+
+
 def make_tools(rag: RAGSystem | None) -> list[BaseTool]:
     """Crea las tools del agente.
 
@@ -64,33 +100,6 @@ def make_tools(rag: RAGSystem | None) -> list[BaseTool]:
             response += f", error {booking['error']}"
         return response
 
-    @tool
-    async def search_documentation(query: str) -> str:
-        """Busca en los manuales internos de Rumbo Sur (sistema Brújula, códigos de error, equipaje, facturación).
-
-        Usala cuando una reserva tenga un código de error RS-xxxx o el vendedor pregunte un procedimiento.
-
-        Args:
-            query: lo que hay que buscar, por ejemplo "error RS-2210".
-
-        Returns:
-            Fragmentos de los manuales, cada uno con el nombre del archivo entre corchetes.
-        """
-
-        if rag is None:
-            return "ERROR: la búsqueda en la documentación no está disponible."
-
-        try:
-            documents = await asyncio.to_thread(rag.retrieve, query)
-            if not documents:
-                return f"No encontré documentación para {query}"
-        except Exception as e:
-            return f"ERROR: la búsqueda falló ({e}). Intentá de nuevo."
-
-        result = []
-        for doc in documents:
-            result.append(f"[{doc.metadata['source']}] {doc.page_content}")
-
-        return "\n\n".join(result)
+    search_documentation = make_search_tool(rag=rag)
 
     return [get_booking, search_documentation]
