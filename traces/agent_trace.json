@@ -1,0 +1,681 @@
+{
+  "multi_step": [
+    {
+      "type": "human",
+      "data": {
+        "content": "La reserva RSV7K2 no me deja emitir, ¿qué hago?",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "human",
+        "name": null,
+        "id": "ac2b23c6-e602-4e6c-8fe4-431bc53b1a0c"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "get_booking",
+            "arguments": "{\"locator\": \"RSV7K2\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_16588358691842637507": "EmAKXgFpFH0TedbD2rMN5Q093SuG9CIcdLQyWbjAcme7ZzIOQEVUWlocIIFoLt0I3ry2adaUgiJy3fC56jCvRprDVx9VbO/aG6m9iwXIHwedgAkgashLZKCc/7Wg/ZkifVc="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-7ed1-7162-8298-4bebd90e0c17-0",
+        "tool_calls": [
+          {
+            "name": "get_booking",
+            "args": {
+              "locator": "RSV7K2"
+            },
+            "id": "call_16588358691842637507",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 529,
+          "output_tokens": 20,
+          "total_tokens": 549,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "Reserva RSV7K2: pasajero Lucía Fernández, producto Vuelo Buenos Aires - Madrid, estado bloqueada, error RS-2210",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "get_booking",
+        "id": "3fec962a-c075-44fa-98d2-e279931118bd",
+        "tool_call_id": "call_16588358691842637507",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "search_documentation",
+            "arguments": "{\"query\": \"error RS-2210\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_12736668105501237055": "EmAKXgFpFH0TjyF7lE0Om0i6T7y6AsRmCqibllDMmmZOpjJ1AsOCQnG4ae5SzXGcJkVfr9bma+betZtm2Ku0r9qMxI+kZpZUu5ioIohjhgWUuB84pH3iQlLMBw6TvxzUqCI="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-895e-79f0-a9f4-15d2647d9411-0",
+        "tool_calls": [
+          {
+            "name": "search_documentation",
+            "args": {
+              "query": "error RS-2210"
+            },
+            "id": "call_12736668105501237055",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 594,
+          "output_tokens": 22,
+          "total_tokens": 616,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "[manual_sistema_de_reservas.md] ## 3. Códigos de error  \nCuando una operación falla, Brújula muestra un código de error. Estos son los más frecuentes y qué hacer en cada caso:  \n- **RS-1001 — Localizador inexistente:** el localizador no existe o tiene un error de tipeo. Verificar con el cliente; recordar que el sistema no usa las letras I ni O, para no confundirlas con los números 1 y 0.\n- **RS-1042 — Pago rechazado:** la pasarela de pagos rechazó la tarjeta. No reintentar más de dos veces con la misma tarjeta, porque el banco puede bloquearla. Pedir otro medio de pago.\n- **RS-1050 — Cupo agotado:** el hotel o el vuelo ya no tienen lugar para esa fecha. Ofrecer fechas alternativas desde la pestaña \"Disponibilidad\".\n- **RS-2003 — Tarifa vencida:** el precio que se cotizó ya no está vigente. Volver a cotizar; las tarifas de vuelos se mantienen solo por 30 minutos.\n- **RS-2210 — Documento inválido:** el número de pasaporte o de DNI no tiene el formato correcto para el destino. Revisar que el documento esté vigente y que se haya elegido el tipo correcto.\n- **RS-3100 — Proveedor sin respuesta:** el sistema de la aerolínea o del hotel no respondió a tiempo. Esperar cinco minutos y reintentar. Si el error se repite tres veces, abrir un ticket a la mesa de ayuda.\n\n[manual_sistema_de_reservas.md] ## 4. Mesa de ayuda  \nLos problemas técnicos que el vendedor no puede resolver se informan a la mesa de ayuda de sistemas, abriendo un ticket desde el menú \"Soporte\" de Brújula. Cada ticket necesita el localizador, el código de error y una captura de pantalla.  \nLos tickets tienen tres prioridades:  \n- **P1:** el sistema no funciona para nadie. Se atiende en menos de 30 minutos, también los fines de semana.\n- **P2:** un error impide confirmar o emitir una reserva concreta. Se atiende en menos de 4 horas hábiles.\n- **P3:** consultas y problemas menores. Se atienden en menos de 2 días hábiles.\n\n[manual_sistema_de_reservas.md] # Manual del sistema de reservas Brújula  \n## 1. Qué es Brújula  \nBrújula es el sistema interno que usan los vendedores de Rumbo Sur Viajes para crear, modificar y cancelar reservas. Se conecta con las aerolíneas, los hoteles y la pasarela de pagos, y guarda el historial completo de cada reserva. Se accede desde el navegador, en brujula.rumbosur.example, con el usuario y la contraseña corporativos.  \nCada reserva tiene un **localizador** de seis caracteres, por ejemplo `RSV7K2`. El localizador es el dato que hay que pedirle siempre al cliente para buscar su reserva; el nombre del pasajero no alcanza, porque puede haber homónimos.\n\n[politica_de_cancelacion.md] ## 5. Cancelaciones por parte de la agencia  \nSi Rumbo Sur Viajes cancela un paquete, por ejemplo porque no se alcanza el mínimo de pasajeros para una salida grupal, el cliente puede elegir entre:  \n- el reembolso del 100% del valor pagado, sin ningún cargo, o\n- un crédito por el 110% del valor pagado, para usar en cualquier viaje de la agencia dentro de los 12 meses siguientes.  \nLa agencia avisa estas cancelaciones con al menos 21 días de anticipación. Si el aviso llega más tarde, el cliente recibe además una compensación de 100 dólares por persona.\n\n[emergencias_durante_el_viaje.md] ## 2. Protocolos según el tipo de emergencia  \nEl equipo de guardia clasifica cada llamado con un código de protocolo:  \n- **PRT-01 — Vuelo cancelado o demorado más de 4 horas:** la guardia gestiona con la aerolínea la reprogramación del vuelo y, si hace falta, una noche adicional de hotel. Si el pasajero pierde una noche de alojamiento del paquete por la demora, la agencia la reintegra.\n- **PRT-02 — Problemas con el hotel:** si el hotel no tiene la reserva, o la habitación no corresponde a la categoría contratada, la guardia consigue una habitación equivalente o superior en otro hotel de la zona, sin costo para el pasajero.\n- **PRT-03 — Traslado que no se presentó:** si el traslado del aeropuerto al hotel no aparece en 30 minutos, el pasajero puede tomar un taxi o un servicio de transporte por aplicación y pedir el reintegro, guardando el comprobante. El reintegro máximo es de 60 dólares por traslado.\n- **PRT-04 — Pérdida o robo de documentos:** la guardia indica al pasajero cómo hacer la denuncia policial y cómo contactar al consulado más cercano para tramitar un documento de viaje provisorio. La agencia reprograma sin cargo los servicios que el pasajero no pueda usar mientras hace el trámite.\n- **PRT-05 — Catástrofe natural o conflicto en el destino:** la guardia contacta a todos los pasajeros que estén en la zona, coordina su evacuación con las aerolíneas y aplica la política de fuerza mayor para los servicios que no se puedan usar.",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "search_documentation",
+        "id": "2cd36d64-ceba-4288-b95f-d431ea0db86d",
+        "tool_call_id": "call_12736668105501237055",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "text": "La reserva **RSV7K2** (pasajero: Lucía Fernández, Vuelo Buenos Aires - Madrid) se encuentra **bloqueada** por el error **RS-2210** (Documento inválido).\n\n**Pasos a seguir:**\n1. Revisá que el número de pasaporte o DNI cargado en el sistema esté vigente y tenga el formato correcto para el destino.\n2. Verificá que se haya seleccionado el tipo de documento correcto.\n3. Una vez corregido el documento, procedé a emitir nuevamente.",
+            "extras": {
+              "signature": "EmAKXgFpFH0ToMJROh4nOOi6a4nvKr4PlAsCVaJfv4Uvr06X0DlWhFJflNVxvOk5ZvpFsjgHZjokfxT8GthA5hONufu2WZlSyn7sz+I90b2JvzRXnX/TiBqCRlvahtjqXFw="
+            }
+          }
+        ],
+        "additional_kwargs": {},
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-9533-7f73-bb73-c1064c4ea341-0",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 1840,
+          "output_tokens": 118,
+          "total_tokens": 1958,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    }
+  ],
+  "clarify": [
+    {
+      "type": "human",
+      "data": {
+        "content": "¿En qué estado está la reserva RSV7I2?",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "human",
+        "name": null,
+        "id": "7371ef6a-083a-4de0-b6df-f5db64a2fa93"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "get_booking",
+            "arguments": "{\"locator\": \"RSV7I2\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_4629946406818337797": "EmAKXgFpFH0TOL7qgjbizFIaJ6GSZ931r73Kt+LZv7Rn2cSuaLFPw3t1lKyc4m44VIB/T4V/ko+5FJRDWeQFG6hdkE2HpwzmkfQUc2lIRSdFYuHICIQyeawWB1OFBhnf71k="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-9af0-7bc3-a144-c2ac17bfb69f-0",
+        "tool_calls": [
+          {
+            "name": "get_booking",
+            "args": {
+              "locator": "RSV7I2"
+            },
+            "id": "call_4629946406818337797",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 525,
+          "output_tokens": 21,
+          "total_tokens": 546,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "ERROR RS-1001: el localizador RSV7I2 tiene un formato inválido. Tiene 6 caracteres y nunca usa las letras I ni O. Pedile al vendedor que lo verifique.",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "get_booking",
+        "id": "ea27a6b1-0ee8-4880-bb38-91c589c27669",
+        "tool_call_id": "call_4629946406818337797",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "text": "El localizador ingresado (RSV7I2) tiene un formato inválido (contiene la letra \"I\"). Por favor, verificá el localizador correcto de 6 caracteres (recordá que no utiliza las letras I ni O) para poder consultar la reserva.",
+            "extras": {
+              "signature": "EmAKXgFpFH0TohcS5sHdFG9wqmlwxLYCjcuBH8avTDT9lFzsM5MBU+XSqPWY6/PH0DPeHZGXWf0jfXDt0aflaZqFRYL4Syj2WCVxf1RUy8hbQ6dC6NnFXX3xyfMLU4RO9gQ="
+            }
+          }
+        ],
+        "additional_kwargs": {},
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-a5a4-7700-907b-cd5842b41856-0",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 601,
+          "output_tokens": 56,
+          "total_tokens": 657,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    }
+  ],
+  "retry": [
+    {
+      "type": "human",
+      "data": {
+        "content": "¿Está confirmada la reserva RSV3P8?",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "human",
+        "name": null,
+        "id": "71070e1f-72f9-4308-83b7-2994933d51f4"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "get_booking",
+            "arguments": "{\"locator\": \"RSV3P8\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_8240060128696218788": "EmAKXgFpFH0T9cR3hxGGHbhTEcaqd8oKKcfThbe/a7Yb20oGXPVXyVUnSvy/lgXnu72q7gShKF0UdfTRjuxCpuPPZzzMRtIuokTlXtRKtmZsfUUlIRasEUJ1gDfIHwYQQ1E="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-acf9-7711-9b64-3b19a4572f12-0",
+        "tool_calls": [
+          {
+            "name": "get_booking",
+            "args": {
+              "locator": "RSV3P8"
+            },
+            "id": "call_8240060128696218788",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 524,
+          "output_tokens": 20,
+          "total_tokens": 544,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "ERROR RS-3100: el proveedor no respondió. Intentá de nuevo.",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "get_booking",
+        "id": "166a710c-6ec7-492b-9550-9b5961b67f60",
+        "tool_call_id": "call_8240060128696218788",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "get_booking",
+            "arguments": "{\"locator\": \"RSV3P8\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_17163109421013933892": "EmAKXgFpFH0TBAro/4P3meiVwe0DJSCJdUGbE98ZmcBY4yh6EzvJ9mjayN405sYUvwiQ5jFot+QXmEmY5JzkKZk6VjOaRLoArl0B2uEjacXRf8eskbjQ1GHJvOIDGa5BHnU="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-b496-78d3-b38a-68ba69316f06-0",
+        "tool_calls": [
+          {
+            "name": "get_booking",
+            "args": {
+              "locator": "RSV3P8"
+            },
+            "id": "call_17163109421013933892",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 575,
+          "output_tokens": 20,
+          "total_tokens": 595,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "Reserva RSV3P8: pasajero Martín Gómez, producto Paquete Bariloche 7 noches, estado confirmada",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "get_booking",
+        "id": "a864bcd3-9907-4bb6-a820-cf72ebf84a09",
+        "tool_call_id": "call_17163109421013933892",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "text": "La reserva **RSV3P8** está **confirmada**.\n\n**Datos de la reserva:**\n* **Pasajero:** Martín Gómez\n* **Producto:** Paquete Bariloche 7 noches\n* **Estado:** Confirmada",
+            "extras": {
+              "signature": "EmAKXgFpFH0Tk1JjRZG7t0Aywr5t5daRMClED0YD982UBgyl4IEQnzsVLMcDIMA67Ul5OPZZ4G+v0EIfFTFfofCfeV+avSI/zKd2oVwR9vsBIZ5MVyjA8XraSFjIUBvbMhA="
+            }
+          }
+        ],
+        "additional_kwargs": {},
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-bb97-73b2-9d4f-97191d2eba16-0",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 633,
+          "output_tokens": 49,
+          "total_tokens": 682,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    }
+  ],
+  "memory": [
+    {
+      "type": "human",
+      "data": {
+        "content": "La reserva RSV7K2 no me deja emitir, ¿qué hago?",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "human",
+        "name": null,
+        "id": "ac2b23c6-e602-4e6c-8fe4-431bc53b1a0c"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "get_booking",
+            "arguments": "{\"locator\": \"RSV7K2\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_16588358691842637507": "EmAKXgFpFH0TedbD2rMN5Q093SuG9CIcdLQyWbjAcme7ZzIOQEVUWlocIIFoLt0I3ry2adaUgiJy3fC56jCvRprDVx9VbO/aG6m9iwXIHwedgAkgashLZKCc/7Wg/ZkifVc="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-7ed1-7162-8298-4bebd90e0c17-0",
+        "tool_calls": [
+          {
+            "name": "get_booking",
+            "args": {
+              "locator": "RSV7K2"
+            },
+            "id": "call_16588358691842637507",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 529,
+          "output_tokens": 20,
+          "total_tokens": 549,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "Reserva RSV7K2: pasajero Lucía Fernández, producto Vuelo Buenos Aires - Madrid, estado bloqueada, error RS-2210",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "get_booking",
+        "id": "3fec962a-c075-44fa-98d2-e279931118bd",
+        "tool_call_id": "call_16588358691842637507",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [],
+        "additional_kwargs": {
+          "function_call": {
+            "name": "search_documentation",
+            "arguments": "{\"query\": \"error RS-2210\"}"
+          },
+          "__gemini_function_call_thought_signatures__": {
+            "call_12736668105501237055": "EmAKXgFpFH0TjyF7lE0Om0i6T7y6AsRmCqibllDMmmZOpjJ1AsOCQnG4ae5SzXGcJkVfr9bma+betZtm2Ku0r9qMxI+kZpZUu5ioIohjhgWUuB84pH3iQlLMBw6TvxzUqCI="
+          }
+        },
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-895e-79f0-a9f4-15d2647d9411-0",
+        "tool_calls": [
+          {
+            "name": "search_documentation",
+            "args": {
+              "query": "error RS-2210"
+            },
+            "id": "call_12736668105501237055",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 594,
+          "output_tokens": 22,
+          "total_tokens": 616,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "tool",
+      "data": {
+        "content": "[manual_sistema_de_reservas.md] ## 3. Códigos de error  \nCuando una operación falla, Brújula muestra un código de error. Estos son los más frecuentes y qué hacer en cada caso:  \n- **RS-1001 — Localizador inexistente:** el localizador no existe o tiene un error de tipeo. Verificar con el cliente; recordar que el sistema no usa las letras I ni O, para no confundirlas con los números 1 y 0.\n- **RS-1042 — Pago rechazado:** la pasarela de pagos rechazó la tarjeta. No reintentar más de dos veces con la misma tarjeta, porque el banco puede bloquearla. Pedir otro medio de pago.\n- **RS-1050 — Cupo agotado:** el hotel o el vuelo ya no tienen lugar para esa fecha. Ofrecer fechas alternativas desde la pestaña \"Disponibilidad\".\n- **RS-2003 — Tarifa vencida:** el precio que se cotizó ya no está vigente. Volver a cotizar; las tarifas de vuelos se mantienen solo por 30 minutos.\n- **RS-2210 — Documento inválido:** el número de pasaporte o de DNI no tiene el formato correcto para el destino. Revisar que el documento esté vigente y que se haya elegido el tipo correcto.\n- **RS-3100 — Proveedor sin respuesta:** el sistema de la aerolínea o del hotel no respondió a tiempo. Esperar cinco minutos y reintentar. Si el error se repite tres veces, abrir un ticket a la mesa de ayuda.\n\n[manual_sistema_de_reservas.md] ## 4. Mesa de ayuda  \nLos problemas técnicos que el vendedor no puede resolver se informan a la mesa de ayuda de sistemas, abriendo un ticket desde el menú \"Soporte\" de Brújula. Cada ticket necesita el localizador, el código de error y una captura de pantalla.  \nLos tickets tienen tres prioridades:  \n- **P1:** el sistema no funciona para nadie. Se atiende en menos de 30 minutos, también los fines de semana.\n- **P2:** un error impide confirmar o emitir una reserva concreta. Se atiende en menos de 4 horas hábiles.\n- **P3:** consultas y problemas menores. Se atienden en menos de 2 días hábiles.\n\n[manual_sistema_de_reservas.md] # Manual del sistema de reservas Brújula  \n## 1. Qué es Brújula  \nBrújula es el sistema interno que usan los vendedores de Rumbo Sur Viajes para crear, modificar y cancelar reservas. Se conecta con las aerolíneas, los hoteles y la pasarela de pagos, y guarda el historial completo de cada reserva. Se accede desde el navegador, en brujula.rumbosur.example, con el usuario y la contraseña corporativos.  \nCada reserva tiene un **localizador** de seis caracteres, por ejemplo `RSV7K2`. El localizador es el dato que hay que pedirle siempre al cliente para buscar su reserva; el nombre del pasajero no alcanza, porque puede haber homónimos.\n\n[politica_de_cancelacion.md] ## 5. Cancelaciones por parte de la agencia  \nSi Rumbo Sur Viajes cancela un paquete, por ejemplo porque no se alcanza el mínimo de pasajeros para una salida grupal, el cliente puede elegir entre:  \n- el reembolso del 100% del valor pagado, sin ningún cargo, o\n- un crédito por el 110% del valor pagado, para usar en cualquier viaje de la agencia dentro de los 12 meses siguientes.  \nLa agencia avisa estas cancelaciones con al menos 21 días de anticipación. Si el aviso llega más tarde, el cliente recibe además una compensación de 100 dólares por persona.\n\n[emergencias_durante_el_viaje.md] ## 2. Protocolos según el tipo de emergencia  \nEl equipo de guardia clasifica cada llamado con un código de protocolo:  \n- **PRT-01 — Vuelo cancelado o demorado más de 4 horas:** la guardia gestiona con la aerolínea la reprogramación del vuelo y, si hace falta, una noche adicional de hotel. Si el pasajero pierde una noche de alojamiento del paquete por la demora, la agencia la reintegra.\n- **PRT-02 — Problemas con el hotel:** si el hotel no tiene la reserva, o la habitación no corresponde a la categoría contratada, la guardia consigue una habitación equivalente o superior en otro hotel de la zona, sin costo para el pasajero.\n- **PRT-03 — Traslado que no se presentó:** si el traslado del aeropuerto al hotel no aparece en 30 minutos, el pasajero puede tomar un taxi o un servicio de transporte por aplicación y pedir el reintegro, guardando el comprobante. El reintegro máximo es de 60 dólares por traslado.\n- **PRT-04 — Pérdida o robo de documentos:** la guardia indica al pasajero cómo hacer la denuncia policial y cómo contactar al consulado más cercano para tramitar un documento de viaje provisorio. La agencia reprograma sin cargo los servicios que el pasajero no pueda usar mientras hace el trámite.\n- **PRT-05 — Catástrofe natural o conflicto en el destino:** la guardia contacta a todos los pasajeros que estén en la zona, coordina su evacuación con las aerolíneas y aplica la política de fuerza mayor para los servicios que no se puedan usar.",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "search_documentation",
+        "id": "2cd36d64-ceba-4288-b95f-d431ea0db86d",
+        "tool_call_id": "call_12736668105501237055",
+        "artifact": null,
+        "status": "success"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "text": "La reserva **RSV7K2** (pasajero: Lucía Fernández, Vuelo Buenos Aires - Madrid) se encuentra **bloqueada** por el error **RS-2210** (Documento inválido).\n\n**Pasos a seguir:**\n1. Revisá que el número de pasaporte o DNI cargado en el sistema esté vigente y tenga el formato correcto para el destino.\n2. Verificá que se haya seleccionado el tipo de documento correcto.\n3. Una vez corregido el documento, procedé a emitir nuevamente.",
+            "extras": {
+              "signature": "EmAKXgFpFH0ToMJROh4nOOi6a4nvKr4PlAsCVaJfv4Uvr06X0DlWhFJflNVxvOk5ZvpFsjgHZjokfxT8GthA5hONufu2WZlSyn7sz+I90b2JvzRXnX/TiBqCRlvahtjqXFw="
+            }
+          }
+        ],
+        "additional_kwargs": {},
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-9533-7f73-bb73-c1064c4ea341-0",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 1840,
+          "output_tokens": 118,
+          "total_tokens": 1958,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "human",
+      "data": {
+        "content": "¿Y cómo se llama el pasajero?",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "human",
+        "name": null,
+        "id": "e59458f9-a06c-433b-9a96-ea03d22d0d91"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "text": "El pasajero de la reserva es Lucía Fernández.",
+            "extras": {
+              "signature": "EmAKXgFpFH0TSi7OfQtNfY5nBCkBYWgVr09VNWsc4O4BZ3kBwSeC+u06SIj81kadRBRF22yvK3mUosJevCX7hlyg7R86R0H0oGclZG6RgauQolfKJepzNxZD4sLCMnH3UkI="
+            }
+          }
+        ],
+        "additional_kwargs": {},
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-c063-7c93-a8ac-7afdf966bf52-0",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 1969,
+          "output_tokens": 11,
+          "total_tokens": 1980,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    }
+  ],
+  "other": [
+    {
+      "type": "human",
+      "data": {
+        "content": "¿Y cómo se llama el pasajero?",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "human",
+        "name": null,
+        "id": "258877e2-e077-4e7b-ba46-251459bfc8f1"
+      }
+    },
+    {
+      "type": "ai",
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Para poder decirte el nombre del pasajero, necesito que me indiques el **localizador** de la reserva. ¿Cuál es?",
+            "extras": {
+              "signature": "EmAKXgFpFH0TLoOD6zDYC2Ud/PMD37EqMP+qkepeI8jXvtkqM7kfcrLmSpqe/w+2HMgvLTndfDktdSpMEZG7kBd00vr8jvlKoIttMq8NasMZVbBUjl2Mfj0sI4jqcmLJqLE="
+            }
+          }
+        ],
+        "additional_kwargs": {},
+        "response_metadata": {
+          "finish_reason": "STOP",
+          "model_name": "gemini-3.5-flash-lite",
+          "safety_ratings": [],
+          "model_provider": "google_genai"
+        },
+        "type": "ai",
+        "name": null,
+        "id": "lc_run--01a1b68f-c392-7223-9c33-f2216635c96c-0",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "input_tokens": 522,
+          "output_tokens": 28,
+          "total_tokens": 550,
+          "input_token_details": {
+            "cache_read": 0
+          }
+        }
+      }
+    }
+  ]
+}
