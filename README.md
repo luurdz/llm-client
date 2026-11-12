@@ -529,6 +529,104 @@ pytest -v tests/test_agent_tools.py tests/test_agent_graph.py
 - `connect_pinecone` y `load_chunk_metas` se comparten entre `run_agent.py`, `evaluate.py`, `ingest_pinecone.py` y los tests.
 - La consigna menciona OpenAI o Anthropic. Se usa Gemini porque `build_chat_model()` devuelve el proveedor configurado y los tres soportan `bind_tools`. En el plan gratuito de Gemini puede aparecer el error 429.
 
+## Unidad 6 — Orquestador multi-agente
+
+Un supervisor coordina a tres especialistas para responder consultas de clientes de Rumbo Sur: cuánto sale un paquete, cuánto es la seña y qué se hace cada día.
+
+### Evidencia por criterio de la rúbrica
+
+| Criterio | Archivos | Comando | Evidencia |
+|---|---|---|---|
+| Documentación y diagrama (20%) | `README.md` | — | [Grafo](#grafo-multi-agente), [Topología](#por-qué-esta-topología) |
+| Grafo y supervisor (35%) | `multiagent/graph.py`, `multiagent/supervisor.py` | `python run_multiagent.py` | [Supervisor](#supervisor), `demo_multiagent.ipynb` |
+| Especialistas y tools (25%) | `multiagent/agents/`, `multiagent/tools.py`, `multiagent/prompts.py` | `pytest -v tests/test_multiagent_graph.py` | [Especialistas](#especialistas) |
+| Estado y validación (20%) | `multiagent/state.py` | — | [Estado](#estado), [Conflictos](#cómo-se-manejan-los-conflictos) |
+
+### Grafo multi-agente
+
+Generado con `app.get_graph().draw_mermaid()`. Las flechas punteadas salen de la arista condicional del supervisor. Cada especialista vuelve siempre al supervisor.
+
+```mermaid
+graph TD;
+	__start__([__start__]):::first
+	supervisor(supervisor)
+	researcher(researcher)
+	analyst(analyst)
+	planner(planner)
+	__end__([__end__]):::last
+	__start__ --> supervisor;
+	analyst --> supervisor;
+	planner --> supervisor;
+	researcher --> supervisor;
+	supervisor -. &nbsp;FINISH&nbsp; .-> __end__;
+	supervisor -.-> analyst;
+	supervisor -.-> planner;
+	supervisor -.-> researcher;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+```
+
+### Por qué esta topología
+
+Jerárquica, con un supervisor. Las tareas dependen unas de otras: el analista y el planificador necesitan las notas del investigador, y alguien tiene que revisar el resultado antes de responder. Con un supervisor, el orden y la validación están en un solo lugar y cada especialista recibe solo lo que necesita. En una topología de colaboración o pizarra, cada agente tendría que decidir cuándo actuar y quién valida, y es más difícil cortar un bucle.
+
+### Supervisor
+
+`make_supervisor_node` (`multiagent/supervisor.py`) coordina y no ejecuta tareas:
+
+1. Arma un resumen del estado (`describe_state`): la consulta, las notas, el cálculo de la tool, la respuesta del analista y el itinerario.
+2. Le pide al modelo una decisión con `with_structured_output(SupervisorDecision)`. `next_agent` es el `Literal` `NextAgent`, así que el modelo solo puede elegir `researcher`, `analyst`, `planner` o `FINISH`.
+3. Antes de `FINISH` revisa la rúbrica de `SUPERVISOR_PROMPT`: el total y la seña coinciden con la tool, están todas las excursiones, no hay lugares inventados, se respetan las reglas del paquete (nada exigente el día 1) y la cantidad de días es noches + 1.
+4. Si algo falla, devuelve el trabajo al agente que corresponde con un `feedback` concreto.
+
+La función `route` lee `next_agent` y la arista condicional lo manda al nodo, o a `END` con `FINISH`.
+
+### Especialistas
+
+Cada uno es un `create_react_agent` envuelto en un nodo que le pasa solo su instrucción (la consulta, los datos que necesita y el feedback del supervisor), no toda la conversación.
+
+| Agente | Tool | Escribe en el estado |
+|---|---|---|
+| `researcher` | `search_documentation` (el `RAGSystem` de la unidad 4) | `research_notes` |
+| `analyst` | `calculate_trip_cost`: devuelve un `CostEstimate` como artifact | `cost_estimate` |
+| `planner` | — (arma el itinerario con las notas) | `itinerary` |
+
+### Estado
+
+`TravelState` extiende `MessagesState`. Cada agente escribe solo su campo, y cada mensaje lleva el `name` de quien lo escribió, para saber quién aportó qué. `cost_estimate` se valida con Pydantic (`CostEstimate`: personas > 0, montos ≥ 0) dentro de la tool, antes de llegar al estado. `next_agent`, `step_count` y `supervisor_feedback` los escribe solo el supervisor.
+
+### Cómo se manejan los conflictos
+
+- **Bucle de correcciones:** `step_count` cuenta las decisiones del supervisor. Con más de `MAX_STEPS` (8) termina con `FINISH` sin llamar al modelo.
+- **Decisión inválida del modelo:** si el structured output falla, `fallback_route` elige el primer dato que falta (notas, costo, itinerario) o `FINISH`.
+- **Orden imposible:** si el modelo elige `analyst` o `planner` sin notas, el supervisor manda primero al `researcher`.
+- **Especialista sin datos:** si el planificador responde "Falta dato", su respuesta queda en los mensajes pero no pisa el itinerario anterior.
+- **Rechazo:** el `feedback` del supervisor llega al agente en la próxima llamada, junto con su itinerario anterior.
+
+### Demo
+
+`demo_multiagent.ipynb` se corrió una vez con Gemini y quedó guardado con las salidas. Para la consulta "Cusco y Machu Picchu para 2 personas con upgrade de hotel" el supervisor delegó en `researcher → analyst → planner → FINISH`, en 4 pasos. Resultado: total 4390 dólares, seña 1317, día 1 de descanso y todas las excursiones del paquete.
+
+`python run_multiagent.py` corre la misma consulta y guarda `traces/multiagent_trace.json`. En la corrida guardada, el supervisor rechazó el itinerario tres veces antes de aceptarlo: ahí se ve el feedback en acción.
+
+Las dos usan un `InMemoryRateLimiter` de 10 pedidos por minuto, porque una consulta hace entre 8 y 15 llamadas y el plan gratuito de Gemini permite 15 por minuto.
+
+### Tests
+
+`tests/test_multiagent_graph.py` prueba el grafo con un modelo falso, sin llamar a Gemini:
+
+- la delegación completa y el `CostEstimate` 4390 / 1317;
+- el tope de pasos;
+- la ruta fija ante una decisión inválida;
+- la redirección al investigador;
+- el feedback que llega al planificador;
+- la reconstrucción de un itinerario rechazado.
+
+```bash
+pytest -v tests/test_multiagent_graph.py
+```
+
 ## Estructura del proyecto
 
 ```
@@ -542,6 +640,9 @@ llm-client/
 ├── evaluate.py                   # Unidad 4: Recall@5 y Precision@5 de Pinecone, BM25 e híbrido
 ├── pytest.ini                    # Unidad 4: configuración de pytest
 ├── run_agent.py                  # Unidad 5: escenarios del agente, memoria y traza
+├── run_multiagent.py             # Unidad 6: consulta al orquestador y traza
+├── demo_multiagent.ipynb         # Unidad 6: demo de la delegación, con salidas
+├── traces/multiagent_trace.json  # Unidad 6: traza de una corrida con correcciones del supervisor
 ├── requirements.txt
 ├── .env.example                  # Plantilla de variables de entorno (compartida)
 ├── data/                         # Unidad 3: documentos de la agencia de viajes ficticia
@@ -580,6 +681,13 @@ llm-client/
     ├── tools.py                  # make_tools(): get_booking y search_documentation
     ├── prompts.py                # SYSTEM_PROMPT
     └── graph.py                  # build_llm() y build_agent_graph()
+└── multiagent/                   # Unidad 6: orquestador multi-agente
+    ├── state.py                  # TravelState, CostEstimate, NextAgent y SupervisorDecision
+    ├── prompts.py                # Prompts del investigador, analista, planificador y supervisor
+    ├── tools.py                  # calculate_trip_cost
+    ├── supervisor.py             # make_supervisor_node(), describe_state() y fallback_route()
+    ├── graph.py                  # build_travel_graph(): nodos y aristas condicionales
+    └── agents/                   # research_agent.py, analyst_agent.py y planner_agent.py
 ├── benchmark/golden_set.json     # Unidad 4: 5 preguntas con su documento esperado
 └── tests/                        # Unidades 4 y 5: tests de pytest
 ```
