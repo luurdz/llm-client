@@ -16,6 +16,9 @@ def build_research_agent(llm: BaseChatModel, rag: RAGSystem | None) -> CompiledS
 def make_research_node(agent: CompiledStateGraph):
     async def research_node(state: TravelState) -> dict:
         first_message= state["messages"][0].text
+        feedback = state.get("supervisor_feedback")
+        if feedback:
+            first_message += f"\n\nCorrecciones del supervisor:\n{feedback}"
         result = await agent.ainvoke({"messages": [HumanMessage(content=first_message)]})
         response = result["messages"][-1].text
         return {"research_notes": response, "messages": [AIMessage(content=response, name="researcher")]}

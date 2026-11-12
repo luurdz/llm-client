@@ -12,9 +12,16 @@ class CostEstimate(BaseModel):
 NextAgent = Literal["researcher", "analyst", "planner", "FINISH"]
 
 
+class SupervisorDecision(BaseModel):
+    next_agent: NextAgent = Field(description="Agente que trabaja ahora, o FINISH si la respuesta está completa y cumple la rúbrica")
+    feedback: str = Field(default="", description="Qué tiene que corregir el agente elegido. Vacío si no hay nada que corregir")
+    reason: str = Field(description="Por qué se eligió ese agente, en una oración")
+
+
 class TravelState(MessagesState):
     research_notes: str | None
     cost_estimate: CostEstimate | None
     itinerary: str | None
     next_agent: NextAgent
     step_count: int
+    supervisor_feedback: str | None
