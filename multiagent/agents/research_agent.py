@@ -17,7 +17,13 @@ def make_research_node(agent: CompiledStateGraph):
     async def research_node(state: TravelState) -> dict:
         first_message= state["messages"][0].text
         feedback = state.get("supervisor_feedback")
-        if feedback:
+        previous = state.get("research_notes")
+        if feedback and previous:
+            first_message += (
+                f"\n\nNotas anteriores:\n{previous}\n\nCorrecciones del supervisor:\n{feedback}\n\n"
+                "Devolvé la lista completa: las notas anteriores con las correcciones."
+            )
+        elif feedback:
             first_message += f"\n\nCorrecciones del supervisor:\n{feedback}"
         result = await agent.ainvoke({"messages": [HumanMessage(content=first_message)]})
         response = result["messages"][-1].text

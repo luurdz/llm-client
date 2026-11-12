@@ -16,15 +16,20 @@ def describe_state(state: TravelState) -> str:
     """Arma el texto que lee el supervisor: la consulta y lo que ya produjo cada agente."""
     cost = state.get("cost_estimate")
     cost_text = f"total {cost.total} dólares, seña {cost.deposit} dólares, {cost.people} pasajeros" if cost else PENDING
-    analyst_answer = next(
-        (m.text for m in reversed(state["messages"]) if isinstance(m, AIMessage) and m.name == "analyst"), PENDING
-    )
     return (
         f"Consulta del cliente:\n{state['messages'][0].text}\n\n"
         f"Notas del investigador:\n{state.get('research_notes') or PENDING}\n\n"
         f"Cálculo de costos (tool):\n{cost_text}\n\n"
-        f"Respuesta del analista:\n{analyst_answer}\n\n"
-        f"Itinerario:\n{state.get('itinerary') or PENDING}"
+        f"Última respuesta del analista:\n{last_answer(state, 'analyst')}\n\n"
+        f"Itinerario:\n{state.get('itinerary') or PENDING}\n\n"
+        f"Última respuesta del planificador:\n{last_answer(state, 'planner')}"
+    )
+
+
+def last_answer(state: TravelState, agent: str) -> str:
+    """Último mensaje del agente, aunque no haya escrito su campo (por ejemplo, "Falta dato")."""
+    return next(
+        (m.text for m in reversed(state["messages"]) if isinstance(m, AIMessage) and m.name == agent), PENDING
     )
 
 
@@ -56,12 +61,15 @@ def make_supervisor_node(llm: BaseChatModel, max_steps: int = MAX_STEPS):
                 decision = SupervisorDecision(next_agent=fallback_route(state), reason="Ruta fija por error del modelo.")
             if decision.next_agent in ("analyst", "planner") and not state.get("research_notes"):
                 decision = SupervisorDecision(next_agent="researcher", reason="Faltan las notas del investigador.")
-        logger.info("Paso %d -> %s (%s)", step, decision.next_agent, decision.reason)
+        content = f"-> {decision.next_agent}: {decision.reason}"
+        if decision.feedback:
+            content += f" | feedback: {decision.feedback}"
+        logger.info("Paso %d %s", step, content)
         return {
             "next_agent": decision.next_agent,
             "step_count": step,
             "supervisor_feedback": decision.feedback or None,
-            "messages": [AIMessage(content=f"-> {decision.next_agent}: {decision.reason}", name="supervisor")],
+            "messages": [AIMessage(content=content, name="supervisor")],
         }
 
     return supervisor_node

@@ -23,7 +23,7 @@ def make_planner_node(agent: CompiledStateGraph):
         result = await agent.ainvoke({"messages": [HumanMessage(content=text)]})
         answer = result["messages"][-1].text
         message = AIMessage(content=answer, name="planner")
-        if answer.startswith("Falta dato"):
+        if answer.strip().lstrip("*-# ").startswith("Falta dato"):
             return {"messages": [message]}
         return {"itinerary": answer, "messages": [message]}
     return planner_node

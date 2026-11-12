@@ -14,10 +14,16 @@ def build_analyst_agent(llm:BaseChatModel) -> CompiledStateGraph:
 def make_analyst_node(agent: CompiledStateGraph):
     async def analyst_node(state: TravelState) -> dict:
         text = f"{state["messages"][0].text}\n\nDatos:\n{state["research_notes"]}"
+        feedback = state.get("supervisor_feedback")
+        if feedback:
+            text += f"\n\nCorrecciones del supervisor:\n{feedback}"
         results = await agent.ainvoke({"messages": [HumanMessage(content=text)]})
         artifact = None
         for message in results["messages"]:
             if isinstance(message, ToolMessage) and message.name == "calculate_trip_cost":
                 artifact = message.artifact
-        return {"cost_estimate": artifact, "messages": [AIMessage(content=results["messages"][-1].text, name="analyst")]}
+        answer = AIMessage(content=results["messages"][-1].text, name="analyst")
+        if artifact is None:
+            return {"messages": [answer]}
+        return {"cost_estimate": artifact, "messages": [answer]}
     return analyst_node

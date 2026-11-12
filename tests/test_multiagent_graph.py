@@ -4,6 +4,7 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableLambda
 
+from multiagent.agents.analyst_agent import make_analyst_node
 from multiagent.agents.planner_agent import make_planner_node
 from multiagent.graph import build_travel_graph
 from multiagent.state import CostEstimate, SupervisorDecision
@@ -93,12 +94,15 @@ def test_planner_without_notes_is_redirected_to_researcher():
 
 
 class RecordingAgent:
-    def __init__(self):
+    """Agente falso: guarda lo que recibe y responde siempre `reply`."""
+
+    def __init__(self, reply: str = ITINERARY):
+        self.reply = reply
         self.inputs = []
 
     async def ainvoke(self, payload):
         self.inputs.append(payload["messages"][0].content)
-        return {"messages": [AIMessage(ITINERARY)]}
+        return {"messages": [AIMessage(self.reply)]}
 
 
 def test_supervisor_feedback_reaches_the_planner():
@@ -113,6 +117,28 @@ def test_supervisor_feedback_reaches_the_planner():
     assert out["messages"][0].name == "planner"
 
 
+def test_planner_missing_data_keeps_the_previous_itinerary():
+    node = make_planner_node(RecordingAgent(reply="**Falta dato: noches**"))
+    state = {"messages": [HumanMessage(QUESTION)], "research_notes": NOTES, "itinerary": ITINERARY}
+
+    out = asyncio.run(node(state))
+
+    assert "itinerary" not in out
+    assert out["messages"][0].text == "**Falta dato: noches**"
+
+
+def test_analyst_receives_feedback_and_keeps_estimate_without_tool_call():
+    agent = RecordingAgent(reply="Falta dato: cantidad de pasajeros")
+    node = make_analyst_node(agent)
+    state = {"messages": [HumanMessage(QUESTION)], "research_notes": NOTES, "supervisor_feedback": "Recalculá con 2 pasajeros."}
+
+    out = asyncio.run(node(state))
+
+    assert "Correcciones del supervisor:\nRecalculá con 2 pasajeros." in agent.inputs[0]
+    assert "cost_estimate" not in out
+    assert out["messages"][0].name == "analyst"
+
+
 def test_rejected_itinerary_goes_back_to_the_planner_with_feedback():
     model = FakeTravelModel(
         messages=iter([AIMessage(NOTES), AIMessage("Día 1: Machu Picchu"), AIMessage(ITINERARY)]),
@@ -121,5 +147,17 @@ def test_rejected_itinerary_goes_back_to_the_planner_with_feedback():
     result = run(model)
 
     assert result["itinerary"] == ITINERARY
-    assert "Día 1: Machu Picchu" in model.prompts[2]
     assert result["supervisor_feedback"] is None
+    supervisor_messages = [m.text for m in result["messages"] if m.name == "supervisor"]
+    assert "feedback: El día 1 no puede tener Machu Picchu." in supervisor_messages[2]
+
+
+def test_supervisor_sees_the_planner_missing_data_answer():
+    model = FakeTravelModel(
+        messages=iter([AIMessage(NOTES), AIMessage("Falta dato: noches")]),
+        decisions=["researcher", "planner", "FINISH"],
+    )
+    result = run(model)
+
+    assert result.get("itinerary") is None
+    assert "Última respuesta del planificador:\nFalta dato: noches" in model.prompts[2]

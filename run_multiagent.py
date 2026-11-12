@@ -44,15 +44,15 @@ async def main() -> None:
 
     for message in result["messages"][1:]:
         print(f"[{message.name}] {message.text}\n")
-    print(f"cost_estimate: {result['cost_estimate']!r}")
+    print(f"cost_estimate: {result.get('cost_estimate')!r}")
     print(f"pasos del supervisor: {result['step_count']}")
 
     TRACE_PATH.parent.mkdir(exist_ok=True)
     trace = {
         "question": QUESTION,
-        "research_notes": result["research_notes"],
-        "cost_estimate": result["cost_estimate"].model_dump() if result["cost_estimate"] else None,
-        "itinerary": result["itinerary"],
+        "research_notes": result.get("research_notes"),
+        "cost_estimate": result["cost_estimate"].model_dump() if result.get("cost_estimate") else None,
+        "itinerary": result.get("itinerary"),
         "step_count": result["step_count"],
         "messages": messages_to_dict(result["messages"]),
     }
