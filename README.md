@@ -601,14 +601,14 @@ Cada uno es un `create_react_agent` envuelto en un nodo que le pasa solo su inst
 - **Bucle de correcciones:** `step_count` cuenta las decisiones del supervisor. Con más de `MAX_STEPS` (8) termina con `FINISH` sin llamar al modelo.
 - **Decisión inválida del modelo:** si el structured output falla, `fallback_route` elige el primer dato que falta (notas, costo, itinerario) o `FINISH`.
 - **Orden imposible:** si el modelo elige `analyst` o `planner` sin notas, el supervisor manda primero al `researcher`.
-- **Especialista sin datos:** si el planificador responde "Falta dato", su respuesta queda en los mensajes pero no pisa el itinerario anterior.
-- **Rechazo:** el `feedback` del supervisor llega al agente en la próxima llamada, junto con su itinerario anterior.
+- **Especialista sin datos:** si el analista no llama a la tool o el planificador responde "Falta dato", la respuesta queda en los mensajes pero no pisa el `cost_estimate` ni el itinerario anteriores. El supervisor ve la última respuesta de cada uno, así que no los vuelve a llamar igual.
+- **Rechazo:** el `feedback` del supervisor llega al agente en la próxima llamada. El investigador y el planificador reciben también su respuesta anterior para corregirla. El feedback queda en el mensaje del supervisor (`-> planner: ... | feedback: ...`).
 
 ### Demo
 
 `demo_multiagent.ipynb` se corrió una vez con Gemini y quedó guardado con las salidas. Para la consulta "Cusco y Machu Picchu para 2 personas con upgrade de hotel" el supervisor delegó en `researcher → analyst → planner → FINISH`, en 4 pasos. Resultado: total 4390 dólares, seña 1317, día 1 de descanso y todas las excursiones del paquete.
 
-`python run_multiagent.py` corre la misma consulta y guarda `traces/multiagent_trace.json`. En la corrida guardada, el supervisor rechazó el itinerario tres veces antes de aceptarlo: ahí se ve el feedback en acción.
+`python run_multiagent.py` corre la misma consulta y guarda `traces/multiagent_trace.json`: los mensajes de cada agente, con las decisiones y el feedback del supervisor, y el estado final (4 pasos, 4390 / 1317). Los rechazos y el tope de pasos se prueban en los tests, porque en una corrida real no se pueden forzar.
 
 Las dos usan un `InMemoryRateLimiter` de 10 pedidos por minuto, porque una consulta hace entre 8 y 15 llamadas y el plan gratuito de Gemini permite 15 por minuto.
 
@@ -620,8 +620,10 @@ Las dos usan un `InMemoryRateLimiter` de 10 pedidos por minuto, porque una consu
 - el tope de pasos;
 - la ruta fija ante una decisión inválida;
 - la redirección al investigador;
-- el feedback que llega al planificador;
-- la reconstrucción de un itinerario rechazado.
+- el feedback que llega al planificador y al analista;
+- que un "Falta dato" no pise el itinerario ni el `cost_estimate` anteriores;
+- que el supervisor vea la respuesta "Falta dato" del planificador;
+- el rechazo de un itinerario, con el feedback en el mensaje del supervisor.
 
 ```bash
 pytest -v tests/test_multiagent_graph.py
@@ -689,7 +691,7 @@ llm-client/
     ├── graph.py                  # build_travel_graph(): nodos y aristas condicionales
     └── agents/                   # research_agent.py, analyst_agent.py y planner_agent.py
 ├── benchmark/golden_set.json     # Unidad 4: 5 preguntas con su documento esperado
-└── tests/                        # Unidades 4 y 5: tests de pytest
+└── tests/                        # Unidades 4, 5 y 6: tests de pytest
 ```
 
 ## Notas

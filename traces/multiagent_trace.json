@@ -1,13 +1,13 @@
 {
   "question": "Quiero el paquete Cusco y Machu Picchu para 2 personas con upgrade de hotel. ¿Cuánto sale, cuánto es la seña y qué hacemos cada día?",
-  "research_notes": "- Paquete Cusco y Machu Picchu: 7 noches. Precio base por persona: 1.950 dólares [paquetes_y_destinos.md].\n- Upgrade de hotel (mejora de categoría): 35 dólares por noche y por persona [paquetes_y_destinos.md].\n- Seña para confirmar la reserva: 30% del valor del paquete [paquetes_y_destinos.md].\n- Qué incluye el paquete: vuelos de ida y vuelta, alojamiento, traslados entre aeropuerto y hotel, seguro de viaje Básico, hotel tres estrellas con desayuno, tren a Aguas Calientes, entrada a Machu Picchu con guía, y excursión al Valle Sagrado [paquetes_y_destinos.md].\n- Reglas y recomendaciones: las entradas a Machu Picchu tienen cupo diario, por lo que la reserva debe confirmarse al menos 45 días antes de la salida [paquetes_y_destinos.md].\n- Recomendaciones de salud: por la altura de Cusco, se recomienda no planificar actividades exigentes el primer día [paquetes_y_destinos.md].\n- Itinerario diario: No encontrado: itinerario día por día [paquetes_y_destinos.md].",
+  "research_notes": "- **Paquete:** Cusco y Machu Picchu (7 noches). [paquetes_y_destinos.md]\n- **Qué incluye:** Vuelos de ida y vuelta, alojamiento (hotel tres estrellas con desayuno), traslados entre aeropuerto y hotel, seguro de viaje Básico, tren a Aguas Calientes, entrada a Machu Picchu con guía, y excursión al Valle Sagrado. [paquetes_y_destinos.md]\n- **Upgrade de hotel:** Mejora de categoría de hotel por 35 dólares por noche y por persona. [paquetes_y_destinos.md]\n- **Precio:** 1.950 dólares por persona (en habitación doble y temporada baja). Con el upgrade de hotel, se suman 35 dólares por noche y por persona (un total de 245 dólares adicionales por persona por las 7 noches). [paquetes_y_destinos.md]\n- **Seña:** 30% del valor del paquete para confirmar la reserva (el saldo debe pagarse como máximo 20 días antes de la salida). [paquetes_y_destinos.md]\n- **Reglas, plazos y recomendaciones:** \n  - Las entradas a Machu Picchu tienen cupo diario, por lo que la reserva debe confirmarse al menos 45 días antes de la salida. [paquetes_y_destinos.md]\n  - Por la altura de Cusco, se recomienda no planificar actividades exigentes el primer día. [paquetes_y_destinos.md]\n- **Actividades de cada día:** No encontrado: itinerario día por día. [paquetes_y_destinos.md]",
   "cost_estimate": {
     "people": 2,
     "total": 4390.0,
     "deposit": 1317.0
   },
-  "itinerary": "Día 1: Llegada, traslado al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Día libre.\nDía 4: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado al aeropuerto y vuelo de regreso.",
-  "step_count": 7,
+  "itinerary": "Día 1: Llegada, traslado del aeropuerto al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 4: Día libre.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado del hotel al aeropuerto y regreso.",
+  "step_count": 4,
   "messages": [
     {
       "type": "human",
@@ -17,18 +17,18 @@
         "response_metadata": {},
         "type": "human",
         "name": null,
-        "id": "bcbf033d-11b2-4a46-aa98-ad32a3656617"
+        "id": "6508e9cd-445f-4172-9e50-26c7ec792628"
       }
     },
     {
       "type": "ai",
       "data": {
-        "content": "-> researcher: Como no hay notas todavía, debo elegir al investigador para que busque los datos del paquete y los extras.",
+        "content": "-> researcher: Como no hay notas, necesito que el investigador busque los datos del paquete Cusco y Machu Picchu, los extras y las condiciones de pago.",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "supervisor",
-        "id": "ddcdf385-61ff-4484-9dec-878de676c000",
+        "id": "0e646ab2-cc70-4ad9-8650-8f597ab72c48",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
@@ -37,12 +37,12 @@
     {
       "type": "ai",
       "data": {
-        "content": "- Paquete Cusco y Machu Picchu: 7 noches. Precio base por persona: 1.950 dólares [paquetes_y_destinos.md].\n- Upgrade de hotel (mejora de categoría): 35 dólares por noche y por persona [paquetes_y_destinos.md].\n- Seña para confirmar la reserva: 30% del valor del paquete [paquetes_y_destinos.md].\n- Qué incluye el paquete: vuelos de ida y vuelta, alojamiento, traslados entre aeropuerto y hotel, seguro de viaje Básico, hotel tres estrellas con desayuno, tren a Aguas Calientes, entrada a Machu Picchu con guía, y excursión al Valle Sagrado [paquetes_y_destinos.md].\n- Reglas y recomendaciones: las entradas a Machu Picchu tienen cupo diario, por lo que la reserva debe confirmarse al menos 45 días antes de la salida [paquetes_y_destinos.md].\n- Recomendaciones de salud: por la altura de Cusco, se recomienda no planificar actividades exigentes el primer día [paquetes_y_destinos.md].\n- Itinerario diario: No encontrado: itinerario día por día [paquetes_y_destinos.md].",
+        "content": "- **Paquete:** Cusco y Machu Picchu (7 noches). [paquetes_y_destinos.md]\n- **Qué incluye:** Vuelos de ida y vuelta, alojamiento (hotel tres estrellas con desayuno), traslados entre aeropuerto y hotel, seguro de viaje Básico, tren a Aguas Calientes, entrada a Machu Picchu con guía, y excursión al Valle Sagrado. [paquetes_y_destinos.md]\n- **Upgrade de hotel:** Mejora de categoría de hotel por 35 dólares por noche y por persona. [paquetes_y_destinos.md]\n- **Precio:** 1.950 dólares por persona (en habitación doble y temporada baja). Con el upgrade de hotel, se suman 35 dólares por noche y por persona (un total de 245 dólares adicionales por persona por las 7 noches). [paquetes_y_destinos.md]\n- **Seña:** 30% del valor del paquete para confirmar la reserva (el saldo debe pagarse como máximo 20 días antes de la salida). [paquetes_y_destinos.md]\n- **Reglas, plazos y recomendaciones:** \n  - Las entradas a Machu Picchu tienen cupo diario, por lo que la reserva debe confirmarse al menos 45 días antes de la salida. [paquetes_y_destinos.md]\n  - Por la altura de Cusco, se recomienda no planificar actividades exigentes el primer día. [paquetes_y_destinos.md]\n- **Actividades de cada día:** No encontrado: itinerario día por día. [paquetes_y_destinos.md]",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "researcher",
-        "id": "bc29600c-86ae-40c4-b5fb-db71d192879e",
+        "id": "fbea7c2e-5a81-40cc-9bf9-0998d4599cd6",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
@@ -51,12 +51,12 @@
     {
       "type": "ai",
       "data": {
-        "content": "-> analyst: El cliente solicita el costo total y la seña, pero el cálculo de costos está pendiente.",
+        "content": "-> analyst: La consulta pide el precio y la seña, y el cálculo de costos está pendiente. | feedback: Calcula el costo total para 2 personas incluyendo el upgrade de hotel y el monto de la seña correspondiente.",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "supervisor",
-        "id": "80e2f473-1fae-49dd-a257-478929c07f12",
+        "id": "e697c73c-e44b-4c84-92d3-7b2fa2243a4a",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
@@ -65,12 +65,12 @@
     {
       "type": "ai",
       "data": {
-        "content": "* Precio base por persona: 1.950 USD\n* Noches: 7\n* Extra por noche y por persona (upgrade de hotel): 35 USD\n* Pasajeros: 2\n* Total: 4.390 USD\n* Seña (30%): 1.317 USD\n\nRespecto al saldo y al itinerario diario:\n* No se especifica en las notas la fecha exacta en la que se debe abonar el saldo restante.\n* El itinerario día por día no se encuentra disponible en las notas del investigador.",
+        "content": "- **Valores usados:**\n  - Precio por persona: 1950 USD\n  - Noches: 7\n  - Extra por noche y por persona: 35 USD\n  - Pasajeros: 2\n\n- **Totales:**\n  - Total: 4390 USD\n  - Seña (30%): 1317 USD\n\n- **Pago del saldo:**\n  - El saldo debe pagarse como máximo 20 días antes de la salida.",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "analyst",
-        "id": "bbf70162-fbf0-4aa1-9e4a-12be322fb32f",
+        "id": "f9df6258-e227-4018-803d-21e369fdc4ce",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
@@ -79,12 +79,12 @@
     {
       "type": "ai",
       "data": {
-        "content": "-> planner: Como el cliente pide el itinerario y todavía está pendiente, debo llamar al planificador para que lo armé basándose en las notas.",
+        "content": "-> planner: El cálculo de costos ya está listo y falta armar el itinerario solicitado por el cliente. | feedback: Armar el itinerario día por día de 8 días y 7 noches cumpliendo que el primer día no sea exigente y usando las excursiones y visitas de las notas.",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "supervisor",
-        "id": "62069fe4-b9f1-496c-9c40-7ed82328879a",
+        "id": "b439994d-fe0b-448a-84d2-7d88c3d31424",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
@@ -93,12 +93,12 @@
     {
       "type": "ai",
       "data": {
-        "content": "Día 1: Llegada, traslado al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 4: Día libre.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado al aeropuerto y vuelo de regreso.",
+        "content": "Día 1: Llegada, traslado del aeropuerto al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 4: Día libre.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado del hotel al aeropuerto y regreso.",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "planner",
-        "id": "bfeb6d0a-c003-4740-b7c8-3b83559f378d",
+        "id": "fc83a5b2-6b25-4fd0-bf02-96b309b071a8",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
@@ -107,96 +107,12 @@
     {
       "type": "ai",
       "data": {
-        "content": "-> planner: El itinerario actual deja demasiados días libres sin aprovechar las actividades del paquete.",
+        "content": "-> FINISH: El costo, la seña y el itinerario están completos y cumplen con toda la rúbrica.",
         "additional_kwargs": {},
         "response_metadata": {},
         "type": "ai",
         "name": "supervisor",
-        "id": "24e92d1b-b5d8-4aaa-9245-7336bf603acf",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-        "usage_metadata": null
-      }
-    },
-    {
-      "type": "ai",
-      "data": {
-        "content": "Día 1: Llegada, traslado al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 4: Día libre.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado al aeropuerto y vuelo de regreso.",
-        "additional_kwargs": {},
-        "response_metadata": {},
-        "type": "ai",
-        "name": "planner",
-        "id": "18d096a7-4bf8-4e5f-b740-f7161db3149a",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-        "usage_metadata": null
-      }
-    },
-    {
-      "type": "ai",
-      "data": {
-        "content": "-> planner: El itinerario actual no detalla correctamente las actividades incluidas en las notas y debe ser corregido.",
-        "additional_kwargs": {},
-        "response_metadata": {},
-        "type": "ai",
-        "name": "supervisor",
-        "id": "b47cce9c-d921-4ab1-aeb5-70c2c03fa069",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-        "usage_metadata": null
-      }
-    },
-    {
-      "type": "ai",
-      "data": {
-        "content": "Día 1: Llegada, traslado al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 4: Día libre.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado al aeropuerto y vuelo de regreso.",
-        "additional_kwargs": {},
-        "response_metadata": {},
-        "type": "ai",
-        "name": "planner",
-        "id": "28607058-262f-4def-b808-ef6110538bf6",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-        "usage_metadata": null
-      }
-    },
-    {
-      "type": "ai",
-      "data": {
-        "content": "-> planner: El itinerario actual no incluye todas las actividades y visitas detalladas en las notas.",
-        "additional_kwargs": {},
-        "response_metadata": {},
-        "type": "ai",
-        "name": "supervisor",
-        "id": "5728268f-7e86-498e-954e-7532a502f148",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-        "usage_metadata": null
-      }
-    },
-    {
-      "type": "ai",
-      "data": {
-        "content": "Día 1: Llegada, traslado al hotel y descanso.\nDía 2: Excursión al Valle Sagrado.\nDía 3: Día libre.\nDía 4: Tren a Aguas Calientes y entrada a Machu Picchu con guía.\nDía 5: Día libre.\nDía 6: Día libre.\nDía 7: Día libre.\nDía 8: Traslado al aeropuerto y vuelo de regreso.",
-        "additional_kwargs": {},
-        "response_metadata": {},
-        "type": "ai",
-        "name": "planner",
-        "id": "df6b0351-342c-4f57-9fa7-1fcafaa2ca2d",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-        "usage_metadata": null
-      }
-    },
-    {
-      "type": "ai",
-      "data": {
-        "content": "-> FINISH: El costo y la seña están correctos, y el itinerario cumple con todas las reglas de la rúbrica y las notas.",
-        "additional_kwargs": {},
-        "response_metadata": {},
-        "type": "ai",
-        "name": "supervisor",
-        "id": "22a3c3ac-05c7-47c8-9405-63ca09516736",
+        "id": "4cdc4f17-38cf-4a7c-98f0-c6de3c99eabe",
         "tool_calls": [],
         "invalid_tool_calls": [],
         "usage_metadata": null
