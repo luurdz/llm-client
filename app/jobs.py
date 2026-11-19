@@ -38,12 +38,14 @@ async def create_job(redis: Redis, question: str) -> str:
     job_id = str(uuid.uuid4())
     key = job_key(job_id)
     now = _now()
-    await redis.hset(
-        key,
-        mapping={"job_id": job_id, "status": JobStatus.PENDING, "question": question, "created_at": now, "updated_at": now},
-    )
-    await redis.expire(key, JOB_TTL_SECONDS)
-    await redis.lpush(QUEUE_KEY, json.dumps({"job_id": job_id, "action": "run"}))
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.hset(
+            key,
+            mapping={"job_id": job_id, "status": JobStatus.PENDING, "question": question, "created_at": now, "updated_at": now},
+        )
+        pipe.expire(key, JOB_TTL_SECONDS)
+        pipe.lpush(QUEUE_KEY, json.dumps({"job_id": job_id, "action": "run"}))
+        await pipe.execute()
     return job_id
 
 
@@ -61,12 +63,24 @@ async def update_job(redis: Redis, job_id: str, status: JobStatus, **fields: Any
     mapping = {"status": status, "updated_at": _now()}
     for name, value in fields.items():
         mapping[name] = json.dumps(value, ensure_ascii=False) if name in JSON_FIELDS else str(value)
-    await redis.hset(job_key(job_id), mapping=mapping)
+    key = job_key(job_id)
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.hset(key, mapping=mapping)
+        pipe.expire(key, JOB_TTL_SECONDS)
+        await pipe.execute()
 
 
-async def enqueue_resume(redis: Redis, job_id: str, approved: bool) -> None:
-    await update_job(redis, job_id, JobStatus.PENDING)
-    await redis.lpush(QUEUE_KEY, json.dumps({"job_id": job_id, "action": "resume", "approved": approved}))
+async def enqueue_resume(redis: Redis, job_id: str, approved: bool) -> bool:
+    key = job_key(job_id)
+    if await redis.hget(key, "status") != JobStatus.WAITING_APPROVAL:
+        return False
+    if not await redis.hsetnx(key, "approved", str(approved)):
+        return False
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.hset(key, mapping={"status": JobStatus.PENDING, "updated_at": _now()})
+        pipe.lpush(QUEUE_KEY, json.dumps({"job_id": job_id, "action": "resume", "approved": approved}))
+        await pipe.execute()
+    return True
 
 
 async def next_message(redis: Redis, timeout: int = QUEUE_WAIT_SECONDS) -> dict[str, Any] | None:
