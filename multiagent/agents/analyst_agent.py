@@ -13,7 +13,7 @@ def build_analyst_agent(llm:BaseChatModel) -> CompiledStateGraph:
 
 def make_analyst_node(agent: CompiledStateGraph):
     async def analyst_node(state: TravelState) -> dict:
-        text = f"{state["messages"][0].text}\n\nDatos:\n{state["research_notes"]}"
+        text = f"{state['messages'][0].text}\n\nDatos:\n{state['research_notes']}"
         feedback = state.get("supervisor_feedback")
         if feedback:
             text += f"\n\nCorrecciones del supervisor:\n{feedback}"

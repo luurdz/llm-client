@@ -20,3 +20,9 @@ pytest
 langgraph
 langgraph-checkpoint-sqlite
 aiosqlite
+fastapi
+uvicorn[standard]
+redis
+langgraph-checkpoint-redis
+langsmith
+fakeredis

@@ -1,0 +1,16 @@
+[project]
+name = "llm-client"
+version = "0.7.0"
+description = "Cliente de LLMs, pipeline, RAG, agente ReAct y orquestador multi-agente (curso de LLMs)"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "integration: tests that call Pinecone and the embedding API (need .env keys)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

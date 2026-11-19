@@ -7,12 +7,14 @@ Proyecto integrador del curso de AI Engineering. Cada unidad suma una parte sobr
 - **Unidad 3 — Sistema RAG local** (`rag/`, `run_ingest.py`, `run_rag.py`, `data/`): responde preguntas sobre los documentos de una agencia de viajes ficticia usando solo esos documentos, guardados en una base vectorial local (ChromaDB). Si la respuesta no está en los documentos, responde "No lo sé".
 - **Unidad 4 — Sistema RAG escalable en la nube** (`cloud_rag/`, `setup_pinecone.py`, `ingest_pinecone.py`, `evaluate.py`, `benchmark/`, `tests/`): los mismos documentos en un índice serverless de Pinecone, con ingesta incremental, búsqueda híbrida (BM25 + vectorial con `EnsembleRetriever`) y evaluación con Recall@5 y Precision@5.
 - **Unidad 5 — Agente ReAct con LangGraph** (`agent/`, `run_agent.py`, `traces/`): agente que consulta reservas simuladas y busca en los manuales con el RAG de la unidad 4, con reintento, pedido de aclaración, `recursion_limit` y memoria por conversación en SQLite.
+- **Unidad 6 — Orquestador multi-agente** (`multiagent/`, `run_multiagent.py`, `demo_multiagent.ipynb`): un supervisor coordina a un investigador, un analista y un planificador para responder cuánto sale un paquete, cuánto es la seña y qué se hace cada día.
+- **Unidad 7 — API asíncrona con jobs en Redis** (`app/`, `run_load_test.py`, `screenshots/`): API FastAPI sobre el orquestador de la unidad 6, con jobs y checkpoints en Redis, un worker aparte, trazas en LangSmith y aprobación humana de la seña.
 
-La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1), unidad 2 en la rama [`entrega-2`](https://github.com/luurdz/llm-client/tree/entrega-2), unidad 3 en la rama [`entrega-3`](https://github.com/luurdz/llm-client/tree/entrega-3) y unidad 4 en el tag [`unidad-4`](https://github.com/luurdz/llm-client/tree/unidad-4).
+La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://github.com/luurdz/llm-client/tree/unidad-1), unidad 2 en la rama [`entrega-2`](https://github.com/luurdz/llm-client/tree/entrega-2), unidad 3 en la rama [`entrega-3`](https://github.com/luurdz/llm-client/tree/entrega-3), unidad 4 en el tag [`unidad-4`](https://github.com/luurdz/llm-client/tree/unidad-4), unidad 5 en el tag [`unidad-5`](https://github.com/luurdz/llm-client/tree/unidad-5), unidad 6 en el tag [`unidad-6`](https://github.com/luurdz/llm-client/tree/unidad-6) y unidad 7 en el tag [`unidad-7`](https://github.com/luurdz/llm-client/tree/unidad-7).
 
 ## Requisitos
 
-- Python 3.12 o superior (probado con Python 3.14)
+- Python 3.11 o superior (probado con Python 3.14). La versión mínima está fijada en `requires-python` de `pyproject.toml`
 - Una API key del proveedor que se quiera usar. Gemini tiene una capa gratuita: https://aistudio.google.com/apikey
 
 ## Instalación
@@ -69,6 +71,10 @@ cp .env.example .env
 | `PINECONE_API_KEY` | Unidad 4. API key de Pinecone (el plan gratuito Starter alcanza): https://app.pinecone.io |
 | `INDEX_NAME` | Unidad 4. Nombre del índice de Pinecone, por ejemplo `rumbo-sur` |
 | `PINECONE_NAMESPACE` | Unidad 4. Namespace donde se guardan los vectores, por ejemplo `dev` |
+| `LANGSMITH_TRACING` | Unidad 7. `true` para mandar las trazas a LangSmith |
+| `LANGSMITH_API_KEY` | Unidad 7. API key de LangSmith (el plan gratuito alcanza): https://smith.langchain.com |
+| `LANGSMITH_PROJECT` | Unidad 7. Proyecto de LangSmith donde quedan las trazas, por ejemplo `llm-client-unidad-7` |
+| `REDIS_URL` | Unidad 7. URL de un Redis 8 con Search y JSON, por ejemplo `redis://default:PASSWORD@HOST:PORT` |
 
 Solo es obligatoria la key del proveedor elegido. El archivo `.env` está en el `.gitignore`.
 
@@ -427,6 +433,18 @@ A los cuatro documentos de la unidad 3 se sumaron cuatro más: manual del sistem
 
 Agente para los vendedores de Rumbo Sur: consulta reservas en un sistema simulado y busca en los manuales (el `RAGSystem` de la unidad 4) qué hacer ante cada código de error.
 
+### Modelo
+
+La consigna menciona OpenAI o Anthropic. El agente usa **Gemini** (plan gratuito), con esta configuración del `.env`:
+
+```
+LLM_PROVIDER=gemini
+LLM_MODEL=gemini-flash-lite-latest
+GOOGLE_API_KEY=...
+```
+
+`gemini-flash-lite-latest` apunta a `gemini-3.5-flash-lite`, que es el modelo que aparece en `traces/agent_trace.json`. El código no depende de Gemini: `build_chat_model()` devuelve el proveedor configurado, y OpenAI, Anthropic y Gemini soportan `bind_tools` y `with_structured_output`. Para usar otro proveedor, alcanza con cambiar `LLM_PROVIDER`, `LLM_MODEL` y su API key (ver [Configuración](#configuración)). En el plan gratuito de Gemini puede aparecer el error 429 (límite de pedidos por minuto).
+
 ### Evidencia por criterio de la rúbrica
 
 | Criterio | Archivos | Comando | Evidencia |
@@ -434,7 +452,7 @@ Agente para los vendedores de Rumbo Sur: consulta reservas en un sistema simulad
 | Grafo y estado (30%) | `agent/graph.py` | `python run_agent.py` | [Grafo](#grafo) |
 | Tools y multi-paso (35%) | `agent/tools.py`, `agent/prompts.py`, `traces/agent_trace.json` | `python run_agent.py`, `pytest -v` | [Tools](#tools), [Escenarios](#escenarios) y [Traza](#traza) |
 | Memoria con SqliteSaver (20%) | `run_agent.py`, `tests/test_agent_graph.py` | `python run_agent.py` | [Memoria](#memoria) |
-| Repositorio (15%) | `README.md`, `.env.example`, `requirements.txt` | — | [Estructura del proyecto](#estructura-del-proyecto) |
+| Repositorio (15%) | `README.md`, `.env.example`, `requirements.txt`, `pyproject.toml` | — | [Estructura del proyecto](#estructura-del-proyecto) |
 
 ### Grafo
 
@@ -527,11 +545,12 @@ pytest -v tests/test_agent_tools.py tests/test_agent_graph.py
 - El `RAGSystem` se crea una sola vez y `make_tools(rag)` lo comparte con las tools.
 - Los errores se devuelven como texto y no como excepciones: así el modelo puede reintentar o pedir aclaración.
 - `connect_pinecone` y `load_chunk_metas` se comparten entre `run_agent.py`, `evaluate.py`, `ingest_pinecone.py` y los tests.
-- La consigna menciona OpenAI o Anthropic. Se usa Gemini porque `build_chat_model()` devuelve el proveedor configurado y los tres soportan `bind_tools`. En el plan gratuito de Gemini puede aparecer el error 429.
 
 ## Unidad 6 — Orquestador multi-agente
 
 Un supervisor coordina a tres especialistas para responder consultas de clientes de Rumbo Sur: cuánto sale un paquete, cuánto es la seña y qué se hace cada día.
+
+Usa el mismo modelo que la unidad 5 (ver [Modelo](#modelo)).
 
 ### Evidencia por criterio de la rúbrica
 
@@ -629,6 +648,186 @@ Las dos usan un `InMemoryRateLimiter` de 10 pedidos por minuto, porque una consu
 pytest -v tests/test_multiagent_graph.py
 ```
 
+## Unidad 7 — API asíncrona con jobs en Redis, observabilidad y HITL
+
+Una API REST con FastAPI expone el orquestador de la unidad 6. La API no ejecuta el grafo: registra el pedido en Redis, lo encola y responde enseguida con un `job_id`. Un worker, en otro proceso, saca los pedidos de la cola, ejecuta el grafo y guarda el estado del job. El cliente consulta ese estado con polling. Antes de confirmar la seña, el grafo se detiene y espera la aprobación de una persona.
+
+### Evidencia por criterio de la rúbrica
+
+| Criterio | Archivos | Comando | Evidencia |
+|---|---|---|---|
+| API asíncrona (30%) | `app/main.py`, `app/worker.py` | `python run_load_test.py` | [Endpoints](#endpoints), [Prueba de carga](#prueba-de-carga), `traces/load_test.json` |
+| Persistencia en Redis (25%) | `app/jobs.py`, `app/graph.py` | `pytest -v tests/test_jobs.py tests/test_job_graph.py` | [Qué se guarda en Redis](#qué-se-guarda-en-redis) |
+| Observabilidad (20%) | `app/observability.py` | — | [Observabilidad](#observabilidad), `screenshots/` |
+| HITL (15%) | `app/hitl.py`, `app/main.py` | `pytest -v tests/test_worker.py tests/test_api.py` | [Aprobación de la seña](#aprobación-de-la-seña-hitl) |
+| Documentación y estructura (10%) | `README.md`, `requirements.txt`, `.env.example` | — | [Cómo levantarlo](#cómo-levantarlo) |
+
+### Cómo levantarlo
+
+1. **Redis.** `langgraph-checkpoint-redis` necesita Redis 8 (o Redis Stack), porque usa los módulos Search y JSON. Lo probé con una base gratuita de [Redis Cloud](https://redis.io/try-free): en la base, **Connect** muestra la URL `redis://default:PASSWORD@HOST:PORT`, que va en `REDIS_URL`. Con Docker debería alcanzar `docker run -d -p 6379:6379 redis:8` y `REDIS_URL=redis://localhost:6379`, pero no lo probé.
+2. **LangSmith.** Crear una API key en [smith.langchain.com](https://smith.langchain.com) (Settings > API Keys) y completar `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY` y `LANGSMITH_PROJECT` en el `.env`.
+3. **Worker**, en una terminal con el entorno virtual activado:
+
+   ```bash
+   python -m app.worker
+   ```
+
+   Al arrancar muestra `LangSmith tracing ON, project=...` y `Worker ready, up to 5 jobs at a time`.
+
+4. **API**, en otra terminal:
+
+   ```bash
+   uvicorn app.main:app --port 8000
+   ```
+
+   La documentación interactiva queda en http://localhost:8000/docs.
+
+El worker también necesita las variables de Gemini y Pinecone de las unidades anteriores, porque usa el `RAGSystem` de la unidad 4.
+
+### Endpoints
+
+| Método y ruta | Qué hace | Respuestas |
+|---|---|---|
+| `POST /tasks` | Crea el job en `PENDING`, lo encola y devuelve el `job_id` | `202`, `422` si la pregunta está vacía |
+| `GET /tasks/{id}` | Devuelve el estado, el pedido de aprobación, el resultado o el error | `200`, `404` |
+| `POST /tasks/{id}/approve` | Registra la decisión (`{"approved": true}` o `false`) y encola la reanudación | `202`, `404`, `409` si el job no espera aprobación o ya se aprobó |
+
+Ejemplo de una corrida real con la consulta "Cusco y Machu Picchu para 2 personas con upgrade de hotel":
+
+```text
+POST /tasks                     -> 202 {"job_id": "6e201eac-...", "status": "PENDING"}
+GET /tasks/6e201eac-...  (2 s)  -> RUNNING
+GET /tasks/6e201eac-...  (59 s) -> WAITING_APPROVAL
+    approval_request: {"action": "confirm_deposit", "people": 2, "total": 4390.0, "deposit": 1317.0, ...}
+POST /tasks/6e201eac-.../approve {"approved": true} -> 202
+POST /tasks/6e201eac-.../approve {"approved": false} -> 409 "Job ... is DONE, not waiting for approval"
+GET /tasks/6e201eac-...         -> DONE
+    result: {"answer": "Reserva confirmada: se cobra la seña de 1317.0 dólares.",
+             "cost_estimate": {"people": 2, "total": 4390.0, "deposit": 1317.0},
+             "booking_status": "confirmed", "supervisor_steps": 4, "itinerary": "Día 1: Llegada, traslado y descanso ...", ...}
+```
+
+### Estados de un job
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: POST /tasks
+    PENDING --> RUNNING: el worker toma el mensaje
+    RUNNING --> WAITING_APPROVAL: interrupt en approval
+    WAITING_APPROVAL --> PENDING: POST /approve
+    RUNNING --> DONE
+    RUNNING --> FAILED: excepción
+    DONE --> [*]
+    FAILED --> [*]
+```
+
+- `PENDING` se escribe antes de encolar, en la misma transacción de Redis (`create_job`). Cuando el worker toma el mensaje, el job ya existe.
+- Cualquier excepción mientras el worker procesa el job (el LLM, Pinecone, guardar el resultado) deja el job en `FAILED` con `error` = `"Tipo: mensaje"`. El worker sigue con el próximo mensaje.
+
+### Qué se guarda en Redis
+
+| Clave | Tipo | Contenido | Quién la escribe |
+|---|---|---|---|
+| `travel:job:<job_id>` | hash | `status`, `question`, `created_at`, `updated_at`, `approval_request`, `approved`, `result`, `error` | `app/jobs.py` (API y worker) |
+| `travel:queue` | lista | Mensajes `{"job_id", "action": "run"}` o `{"job_id", "action": "resume", "approved"}` | API: `LPUSH`. Worker: `BRPOP` |
+| `checkpoint:*`, `checkpoint_write:*`, `checkpoint_latest:*`, `write_keys_zset:*` | JSON e índices | Estado del grafo después de cada nodo, por `thread_id` | `AsyncRedisSaver` |
+
+- El `thread_id` de los checkpoints es el `job_id`. Para reanudar un job alcanza con su id.
+- Los jobs y los checkpoints vencen a los 7 días, para no llenar los 30 MB del plan gratuito.
+- Los checkpoints se guardan como JSON. `open_checkpointer` (`app/graph.py`) le pasa al serializador la lista de clases que puede reconstruir (`CostEstimate`). Sin esa lista, al reanudar `cost_estimate` vuelve como diccionario y el nodo `approval` falla. Hay un test para esto.
+- `connect_redis` usa un `socket_timeout` de 30 segundos. Con el de 5 segundos que trae `redis-py` por defecto, el `BRPOP` de 5 segundos del worker se cortaba con `TimeoutError` cuando la cola estaba vacía.
+
+### Aprobación de la seña (HITL)
+
+El grafo de la unidad 6 no cambia: `build_job_graph` (`app/graph.py`) lo usa como un nodo (`travel`) y agrega el nodo `approval` a continuación.
+
+```mermaid
+graph TD;
+	__start__([__start__]):::first
+	travel(travel)
+	approval(approval)
+	__end__([__end__]):::last
+	__start__ --> travel;
+	travel -.-> __end__;
+	travel -.-> approval;
+	approval --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+```
+
+- `needs_approval` (`app/hitl.py`) manda a `approval` solo si hay `cost_estimate`. Una consulta sin precio, como "¿qué incluye Punta Cana?", termina sin aprobación.
+- `approval_node` llama a `interrupt()` con el pedido (personas, total y seña). LangGraph guarda el checkpoint y el worker deja el job en `WAITING_APPROVAL` con ese pedido.
+- `POST /tasks/{id}/approve` encola `action: resume`. El worker invoca el grafo con `Command(resume={"approved": ...})`. LangGraph vuelve a ejecutar `approval_node` desde el principio, y esta vez `interrupt()` devuelve la decisión. Antes del `interrupt()` el nodo solo arma el pedido, así que ejecutarlo dos veces no tiene efectos.
+- El resultado queda en `booking_status`: `confirmed` o `rejected`.
+- `enqueue_resume` acepta la decisión solo si el job está en `WAITING_APPROVAL` y graba el campo `approved` con `HSETNX`. Si llegan dos aprobaciones, solo se encola la primera. La segunda responde `409`.
+
+### Observabilidad
+
+Con `LANGSMITH_TRACING=true`, LangChain manda a LangSmith cada ejecución del grafo con todos sus nodos, llamadas al modelo y tools. `build_run_config` (`app/observability.py`) le agrega a cada ejecución:
+
+- `run_name`: `travel-job-<primeros 8 caracteres del job_id>`;
+- tags: `unidad-7` y `prompt:v1` (la versión de los prompts, `PROMPT_VERSION`);
+- metadata: `job_id` y `prompt_version`.
+
+Al arrancar, el worker avisa si el tracing está apagado (`log_tracing_status`). Sin las variables, LangSmith no da ningún error y no llega ninguna traza.
+
+Cada job con aprobación tiene dos trazas con el mismo nombre: la ejecución hasta el `interrupt()` y la reanudación (menos de 1 segundo y 0 tokens, porque `approval` no llama al modelo).
+
+| Captura | Qué muestra |
+|---|---|
+| `screenshots/01_lista_de_trazas.jpg` | Las trazas de los jobs, con estado, entrada, salida y latencia |
+| `screenshots/02_arbol_de_nodos.jpg` | El árbol de un job: `supervisor`, `researcher`, `analyst`, `planner`, `needs_approval`, `approval` y la reanudación |
+| `screenshots/03_tags_y_metadata.jpg` | Los tags `prompt:v1` y `unidad-7` y la metadata `job_id` y `prompt_version` |
+| `screenshots/04_resumen_latencia_y_tokens.jpg` | Latencia P50 y P99, cantidad de trazas, llamadas al modelo y a cada tool |
+
+### Prueba de carga
+
+`run_load_test.py` manda 5 pedidos a la vez (`asyncio.gather`), hace polling de cada uno, aprueba las señas y calcula p50 y p95. Con la API y el worker levantados:
+
+```bash
+python run_load_test.py
+```
+
+Resultado de la corrida guardada en `traces/load_test.json`:
+
+```text
+5 DONE, 0 FAILED de 5 pedidos
+POST /tasks: p50 649.6 ms, p95 737.0 ms
+Job completo: p50 176.6 s, p95 237.5 s
+```
+
+| Consulta | Total | Seña | Recorrido |
+|---|---|---|---|
+| Bariloche Clásico, 2 personas | 1780 | 534 | PENDING → RUNNING → WAITING_APPROVAL → DONE |
+| Cataratas del Iguazú, 3 personas | 2160 | 648 | PENDING → RUNNING → WAITING_APPROVAL → DONE |
+| Salta y Jujuy, 2 personas con upgrade | 2690 | 807 | PENDING → RUNNING → WAITING_APPROVAL → DONE |
+| Río de Janeiro, 2 personas | 2760 | 828 | PENDING → RUNNING → WAITING_APPROVAL → DONE |
+| Qué incluye Punta Cana | — | — | PENDING → RUNNING → DONE |
+
+- Los 5 jobs pasaron a `RUNNING` en el mismo segundo: el worker atiende hasta 5 a la vez (`asyncio.Semaphore`).
+- `POST /tasks` no espera al modelo. Los 650 ms son el ida y vuelta a Redis Cloud.
+- Los 5 jobs comparten un `InMemoryRateLimiter` de 10 pedidos por minuto (el plan gratuito de Gemini permite 15). Por eso no hubo errores 429, pero los jobs se turnan y tardan entre 1,5 y 4 minutos.
+
+### Tests
+
+Usan `fakeredis`, `InMemorySaver` y el modelo falso de la unidad 6, sin llamar a Gemini, Pinecone ni Redis Cloud:
+
+- `tests/test_jobs.py`: `PENDING` y encolado, campos JSON, vencimiento, una sola aprobación, aprobación de un job que no espera o que no existe;
+- `tests/test_job_graph.py`: la pausa con seña 1317, la reanudación aprobada y rechazada, el camino sin aprobación y el serializador de Redis;
+- `tests/test_worker.py`: el recorrido completo de un job, `FAILED` por un error del grafo o posterior, y 5 jobs en paralelo;
+- `tests/test_api.py`: los tres endpoints con sus códigos `202`, `404`, `409` y `422`;
+- `tests/test_load_test.py`: la API, el worker y el script de carga juntos, con un grafo falso.
+
+```bash
+pytest -v tests/test_jobs.py tests/test_job_graph.py tests/test_worker.py tests/test_api.py tests/test_load_test.py
+```
+
+### Limitaciones
+
+- Si el worker se cae mientras procesa un job, el mensaje ya salió de la cola y el job queda en `RUNNING` hasta que vence. Para recuperarlo habría que usar una cola de procesamiento (`BLMOVE`) o volver a encolar los `RUNNING` al arrancar.
+- Hay un solo worker. Para más jobs en paralelo se pueden levantar más procesos, pero el límite real es la cuota de Gemini.
+
 ## Estructura del proyecto
 
 ```
@@ -640,11 +839,14 @@ llm-client/
 ├── setup_pinecone.py             # Unidad 4: crea el índice de Pinecone si no existe
 ├── ingest_pinecone.py            # Unidad 4: ingesta incremental en Pinecone
 ├── evaluate.py                   # Unidad 4: Recall@5 y Precision@5 de Pinecone, BM25 e híbrido
-├── pytest.ini                    # Unidad 4: configuración de pytest
+├── pyproject.toml                # Versión mínima de Python y configuración de pytest
 ├── run_agent.py                  # Unidad 5: escenarios del agente, memoria y traza
 ├── run_multiagent.py             # Unidad 6: consulta al orquestador y traza
 ├── demo_multiagent.ipynb         # Unidad 6: demo de la delegación, con salidas
 ├── traces/multiagent_trace.json  # Unidad 6: traza de una corrida con correcciones del supervisor
+├── run_load_test.py              # Unidad 7: 5 pedidos concurrentes a la API, con p50 y p95
+├── traces/load_test.json         # Unidad 7: resultado de la prueba de carga
+├── screenshots/                  # Unidad 7: capturas de LangSmith
 ├── requirements.txt
 ├── .env.example                  # Plantilla de variables de entorno (compartida)
 ├── data/                         # Unidad 3: documentos de la agencia de viajes ficticia
@@ -690,8 +892,15 @@ llm-client/
     ├── supervisor.py             # make_supervisor_node(), describe_state() y fallback_route()
     ├── graph.py                  # build_travel_graph(): nodos y aristas condicionales
     └── agents/                   # research_agent.py, analyst_agent.py y planner_agent.py
+└── app/                          # Unidad 7: API, worker y grafo con HITL
+    ├── main.py                   # FastAPI: POST /tasks, GET /tasks/{id} y POST /tasks/{id}/approve
+    ├── jobs.py                   # Estado de los jobs y cola en Redis
+    ├── worker.py                 # Saca jobs de la cola y ejecuta el grafo, hasta 5 a la vez
+    ├── graph.py                  # build_job_graph() y open_checkpointer() con AsyncRedisSaver
+    ├── hitl.py                   # JobState, needs_approval() y approval_node() con interrupt
+    └── observability.py          # Tracing de LangSmith: run_name, tags y metadata por job
 ├── benchmark/golden_set.json     # Unidad 4: 5 preguntas con su documento esperado
-└── tests/                        # Unidades 4, 5 y 6: tests de pytest
+└── tests/                        # Unidades 4 a 7: tests de pytest
 ```
 
 ## Notas
@@ -700,6 +909,6 @@ llm-client/
 - Anthropic no recibe `temperature`, porque los modelos actuales de Claude ya no lo aceptan. Lo mismo pasa con `gemini-3.5-flash-lite`, el modelo alternativo del ejemplo: ignora `temperature` y avisa con un `UserWarning`.
 - El modelo alternativo lo probé forzando un timeout de 0.01 segundos en el modelo principal: la cadena respondió con `gemini-3.5-flash-lite`.
 - El sistema RAG lo probé con Gemini (`gemini-embedding-001` para los embeddings). Con OpenAI debería funcionar cambiando `LLM_PROVIDER`, `LLM_MODEL` y `EMBEDDING_MODEL`, pero no lo probé.
-- `langchain-community` (de donde viene `BM25Retriever`) muestra un `DeprecationWarning` porque está dejando de mantenerse. Funciona igual; en `pytest.ini` el aviso está silenciado.
+- `langchain-community` (de donde viene `BM25Retriever`) muestra un `DeprecationWarning` porque está dejando de mantenerse. Funciona igual; en `pyproject.toml` el aviso está silenciado.
 - `langchain-pinecone` no se puede instalar en Python 3.14, así que la unidad 4 usa el SDK nativo de Pinecone y un retriever propio (`PineconeRetriever`).
 - La regla "al menos una tecnología" está en un `field_validator` y no en `Field(min_length=1)`. Con `min_length`, la regla viaja en el esquema que recibe el modelo, y Gemini la cumple a la fuerza: ante un texto sin tecnologías inventaba valores como "Desconocido". Con el validador, el modelo puede devolver la lista vacía y el rechazo lo hace el código.

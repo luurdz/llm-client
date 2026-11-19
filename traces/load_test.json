@@ -1,0 +1,106 @@
+{
+  "requests": 5,
+  "done": 5,
+  "failed": 0,
+  "submit_ms_p50": 649.6,
+  "submit_ms_p95": 737.0,
+  "total_s_p50": 176.6,
+  "total_s_p95": 237.5,
+  "jobs": [
+    {
+      "job_id": "1b06a8b0-04e3-421d-ab31-96cbe17d7ee9",
+      "question": "Quiero el paquete Bariloche Clásico para 2 personas. ¿Cuánto sale y cuánto es la seña?",
+      "submit_ms": 737.0,
+      "total_s": 176.6,
+      "statuses": [
+        "PENDING",
+        "RUNNING",
+        "WAITING_APPROVAL",
+        "DONE"
+      ],
+      "final_status": "DONE",
+      "booking_status": "confirmed",
+      "cost_estimate": {
+        "people": 2,
+        "total": 1780.0,
+        "deposit": 534.0
+      },
+      "error": null
+    },
+    {
+      "job_id": "348f32e1-1dea-4baf-81c9-0e5c5cd7a098",
+      "question": "Quiero Cataratas del Iguazú para 3 personas. ¿Cuánto sale en total y cuánto dejo de seña?",
+      "submit_ms": 650.3,
+      "total_s": 170.1,
+      "statuses": [
+        "PENDING",
+        "RUNNING",
+        "WAITING_APPROVAL",
+        "DONE"
+      ],
+      "final_status": "DONE",
+      "booking_status": "confirmed",
+      "cost_estimate": {
+        "people": 3,
+        "total": 2160.0,
+        "deposit": 648.0
+      },
+      "error": null
+    },
+    {
+      "job_id": "5988588f-4725-4418-94fa-6a5a3afbf21e",
+      "question": "Quiero Salta y Jujuy para 2 personas con upgrade de hotel. ¿Cuánto sale y qué hacemos cada día?",
+      "submit_ms": 649.6,
+      "total_s": 237.5,
+      "statuses": [
+        "PENDING",
+        "RUNNING",
+        "WAITING_APPROVAL",
+        "DONE"
+      ],
+      "final_status": "DONE",
+      "booking_status": "confirmed",
+      "cost_estimate": {
+        "people": 2,
+        "total": 2690.0,
+        "deposit": 807.0
+      },
+      "error": null
+    },
+    {
+      "job_id": "b61ffe3c-a171-43a5-8626-10b231a21ae6",
+      "question": "Quiero Río de Janeiro para 2 personas. ¿Cuánto es la seña para reservar?",
+      "submit_ms": 649.2,
+      "total_s": 207.5,
+      "statuses": [
+        "PENDING",
+        "RUNNING",
+        "WAITING_APPROVAL",
+        "DONE"
+      ],
+      "final_status": "DONE",
+      "booking_status": "confirmed",
+      "cost_estimate": {
+        "people": 2,
+        "total": 2760.0,
+        "deposit": 828.0
+      },
+      "error": null
+    },
+    {
+      "job_id": "a637f68c-5281-4950-abee-0edb29bb5186",
+      "question": "¿Qué incluye el paquete Punta Cana y qué seguro trae?",
+      "submit_ms": 648.9,
+      "total_s": 89.9,
+      "statuses": [
+        "PENDING",
+        "RUNNING",
+        "DONE"
+      ],
+      "final_status": "DONE",
+      "booking_status": null,
+      "cost_estimate": null,
+      "error": null
+    }
+  ]
+}
