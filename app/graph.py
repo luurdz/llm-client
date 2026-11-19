@@ -9,16 +9,22 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from app.hitl import JobState, approval_node, needs_approval
+from app.jobs import JOB_TTL_SECONDS
 from cloud_rag.rag_system import RAGSystem
 from multiagent.graph import build_travel_graph
 
 STATE_CLASSES = [("multiagent", "state", "CostEstimate")]
+CHECKPOINT_TTL_MINUTES = JOB_TTL_SECONDS // 60
+
+
+def build_serializer() -> JsonPlusRedisSerializer:
+    return JsonPlusRedisSerializer(allowed_json_modules=STATE_CLASSES)
 
 
 @asynccontextmanager
 async def open_checkpointer(redis_url: str) -> AsyncIterator[AsyncRedisSaver]:
-    async with AsyncRedisSaver.from_conn_string(redis_url) as saver:
-        saver.serde = JsonPlusRedisSerializer(allowed_json_modules=STATE_CLASSES)
+    async with AsyncRedisSaver.from_conn_string(redis_url, ttl={"default_ttl": CHECKPOINT_TTL_MINUTES}) as saver:
+        saver.serde = build_serializer()
         await saver.asetup()
         yield saver
 

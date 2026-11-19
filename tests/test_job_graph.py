@@ -2,9 +2,11 @@ import asyncio
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.redis.jsonplus_redis import JsonPlusRedisSerializer
 from langgraph.types import Command
 
-from app.graph import build_job_graph
+from app.graph import build_job_graph, build_serializer
+from multiagent.state import CostEstimate
 from tests.test_multiagent_graph import ITINERARY, NOTES, QUESTION, FakeTravelModel, cost_call
 
 CONFIG = {"configurable": {"thread_id": "job-test"}}
@@ -58,3 +60,21 @@ def test_graph_ends_without_pause_when_there_is_no_cost():
 
     assert "__interrupt__" not in result
     assert result.get("booking_status") is None
+
+
+def test_redis_serializer_restores_cost_estimate():
+    cost = CostEstimate(people=2, total=4390.0, deposit=1317.0)
+    serde = build_serializer()
+
+    restored = serde.loads_typed(serde.dumps_typed({"cost_estimate": cost}))
+
+    assert restored["cost_estimate"] == cost
+
+
+def test_redis_serializer_without_allowlist_returns_a_dict():
+    cost = CostEstimate(people=2, total=4390.0, deposit=1317.0)
+    serde = JsonPlusRedisSerializer()
+
+    restored = serde.loads_typed(serde.dumps_typed({"cost_estimate": cost}))
+
+    assert not isinstance(restored["cost_estimate"], CostEstimate)
