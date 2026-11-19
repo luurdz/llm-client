@@ -46,25 +46,24 @@ async def handle_message(graph: CompiledStateGraph, redis: Redis, message: dict[
         logger.warning("Job %s not found, message discarded", job_id)
         return
 
-    await update_job(redis, job_id, JobStatus.RUNNING)
-    if message["action"] == "resume":
-        graph_input = Command(resume={"approved": message["approved"]})
-    else:
-        graph_input = {"messages": [HumanMessage(job["question"])]}
-
     try:
+        await update_job(redis, job_id, JobStatus.RUNNING)
+        if message["action"] == "resume":
+            graph_input = Command(resume={"approved": message["approved"]})
+        else:
+            graph_input = {"messages": [HumanMessage(job["question"])]}
+
         state = await graph.ainvoke(graph_input, build_run_config(job_id))
+
+        if "__interrupt__" in state:
+            await update_job(redis, job_id, JobStatus.WAITING_APPROVAL, approval_request=state["__interrupt__"][0].value)
+            logger.info("Job %s waiting for approval", job_id)
+        else:
+            await update_job(redis, job_id, JobStatus.DONE, result=summarize_result(state))
+            logger.info("Job %s done", job_id)
     except Exception as e:
         logger.exception("Job %s failed", job_id)
         await update_job(redis, job_id, JobStatus.FAILED, error=f"{type(e).__name__}: {e}")
-        return
-
-    if "__interrupt__" in state:
-        await update_job(redis, job_id, JobStatus.WAITING_APPROVAL, approval_request=state["__interrupt__"][0].value)
-        logger.info("Job %s waiting for approval", job_id)
-    else:
-        await update_job(redis, job_id, JobStatus.DONE, result=summarize_result(state))
-        logger.info("Job %s done", job_id)
 
 
 async def worker_loop(graph: CompiledStateGraph, redis: Redis, max_jobs: int = MAX_CONCURRENT_JOBS) -> None:

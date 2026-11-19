@@ -6,7 +6,7 @@ from langchain_core.messages import AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.graph import build_job_graph
-from app.jobs import JobStatus, create_job, enqueue_resume, get_job, next_message
+from app.jobs import JobStatus, create_job, enqueue_resume, get_job, job_key, next_message
 from app.worker import handle_message, worker_loop
 from tests.test_multiagent_graph import ITINERARY, NOTES, QUESTION, FakeTravelModel, cost_call
 
@@ -79,8 +79,26 @@ def test_exception_marks_the_job_failed(redis):
     assert job["error"] == "RuntimeError: 429 quota exceeded"
 
 
+def test_error_after_the_graph_also_marks_the_job_failed(redis):
+    class BadStateGraph:
+        async def ainvoke(self, graph_input, config):
+            return {}  # no "messages": summarize_result raises KeyError after the graph ran
+
+    async def run():
+        job_id = await create_job(redis, QUESTION)
+        await process_next(BadStateGraph(), redis)
+        return await get_job(redis, job_id)
+
+    job = asyncio.run(run())
+    assert job["status"] == JobStatus.FAILED
+
+
 def test_unknown_job_is_ignored(redis):
-    asyncio.run(handle_message(BrokenGraph(), redis, {"job_id": "no-existe", "action": "run"}))
+    async def run():
+        await handle_message(BrokenGraph(), redis, {"job_id": "no-existe", "action": "run"})
+        return await redis.exists(job_key("no-existe"))
+
+    assert asyncio.run(run()) == 0
 
 
 def test_worker_loop_runs_jobs_concurrently(redis):
