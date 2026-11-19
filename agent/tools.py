@@ -94,7 +94,7 @@ def make_tools(rag: RAGSystem | None) -> list[BaseTool]:
         if booking.get("transient_error") and attempts[clean_locator] == 1:
             return f"ERROR {booking['transient_error']}: el proveedor no respondió. Intentá de nuevo."
 
-        response = f"Reserva {clean_locator}: pasajero {booking["passenger"]}, producto {booking["product"]}, estado {booking["status"]}"
+        response = f"Reserva {clean_locator}: pasajero {booking['passenger']}, producto {booking['product']}, estado {booking['status']}"
 
         if booking.get("error"):
             response += f", error {booking['error']}"
