@@ -12,7 +12,7 @@ La versión exacta de cada entrega: unidad 1 en el tag [`unidad-1`](https://gith
 
 ## Requisitos
 
-- Python 3.12 o superior (probado con Python 3.14)
+- Python 3.11 o superior (probado con Python 3.14). La versión mínima está fijada en `requires-python` de `pyproject.toml`
 - Una API key del proveedor que se quiera usar. Gemini tiene una capa gratuita: https://aistudio.google.com/apikey
 
 ## Instalación
@@ -446,7 +446,7 @@ GOOGLE_API_KEY=...
 | Grafo y estado (30%) | `agent/graph.py` | `python run_agent.py` | [Grafo](#grafo) |
 | Tools y multi-paso (35%) | `agent/tools.py`, `agent/prompts.py`, `traces/agent_trace.json` | `python run_agent.py`, `pytest -v` | [Tools](#tools), [Escenarios](#escenarios) y [Traza](#traza) |
 | Memoria con SqliteSaver (20%) | `run_agent.py`, `tests/test_agent_graph.py` | `python run_agent.py` | [Memoria](#memoria) |
-| Repositorio (15%) | `README.md`, `.env.example`, `requirements.txt` | — | [Estructura del proyecto](#estructura-del-proyecto) |
+| Repositorio (15%) | `README.md`, `.env.example`, `requirements.txt`, `pyproject.toml` | — | [Estructura del proyecto](#estructura-del-proyecto) |
 
 ### Grafo
 
@@ -653,7 +653,7 @@ llm-client/
 ├── setup_pinecone.py             # Unidad 4: crea el índice de Pinecone si no existe
 ├── ingest_pinecone.py            # Unidad 4: ingesta incremental en Pinecone
 ├── evaluate.py                   # Unidad 4: Recall@5 y Precision@5 de Pinecone, BM25 e híbrido
-├── pytest.ini                    # Unidad 4: configuración de pytest
+├── pyproject.toml                # Versión mínima de Python y configuración de pytest
 ├── run_agent.py                  # Unidad 5: escenarios del agente, memoria y traza
 ├── run_multiagent.py             # Unidad 6: consulta al orquestador y traza
 ├── demo_multiagent.ipynb         # Unidad 6: demo de la delegación, con salidas
@@ -713,6 +713,6 @@ llm-client/
 - Anthropic no recibe `temperature`, porque los modelos actuales de Claude ya no lo aceptan. Lo mismo pasa con `gemini-3.5-flash-lite`, el modelo alternativo del ejemplo: ignora `temperature` y avisa con un `UserWarning`.
 - El modelo alternativo lo probé forzando un timeout de 0.01 segundos en el modelo principal: la cadena respondió con `gemini-3.5-flash-lite`.
 - El sistema RAG lo probé con Gemini (`gemini-embedding-001` para los embeddings). Con OpenAI debería funcionar cambiando `LLM_PROVIDER`, `LLM_MODEL` y `EMBEDDING_MODEL`, pero no lo probé.
-- `langchain-community` (de donde viene `BM25Retriever`) muestra un `DeprecationWarning` porque está dejando de mantenerse. Funciona igual; en `pytest.ini` el aviso está silenciado.
+- `langchain-community` (de donde viene `BM25Retriever`) muestra un `DeprecationWarning` porque está dejando de mantenerse. Funciona igual; en `pyproject.toml` el aviso está silenciado.
 - `langchain-pinecone` no se puede instalar en Python 3.14, así que la unidad 4 usa el SDK nativo de Pinecone y un retriever propio (`PineconeRetriever`).
 - La regla "al menos una tecnología" está en un `field_validator` y no en `Field(min_length=1)`. Con `min_length`, la regla viaja en el esquema que recibe el modelo, y Gemini la cumple a la fuerza: ante un texto sin tecnologías inventaba valores como "Desconocido". Con el validador, el modelo puede devolver la lista vacía y el rechazo lo hace el código.
