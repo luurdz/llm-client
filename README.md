@@ -427,6 +427,18 @@ A los cuatro documentos de la unidad 3 se sumaron cuatro más: manual del sistem
 
 Agente para los vendedores de Rumbo Sur: consulta reservas en un sistema simulado y busca en los manuales (el `RAGSystem` de la unidad 4) qué hacer ante cada código de error.
 
+### Modelo
+
+La consigna menciona OpenAI o Anthropic. El agente usa **Gemini** (plan gratuito), con esta configuración del `.env`:
+
+```
+LLM_PROVIDER=gemini
+LLM_MODEL=gemini-flash-lite-latest
+GOOGLE_API_KEY=...
+```
+
+`gemini-flash-lite-latest` apunta a `gemini-3.5-flash-lite`, que es el modelo que aparece en `traces/agent_trace.json`. El código no depende de Gemini: `build_chat_model()` devuelve el proveedor configurado, y OpenAI, Anthropic y Gemini soportan `bind_tools` y `with_structured_output`. Para usar otro proveedor, alcanza con cambiar `LLM_PROVIDER`, `LLM_MODEL` y su API key (ver [Configuración](#configuración)). En el plan gratuito de Gemini puede aparecer el error 429 (límite de pedidos por minuto).
+
 ### Evidencia por criterio de la rúbrica
 
 | Criterio | Archivos | Comando | Evidencia |
@@ -527,11 +539,12 @@ pytest -v tests/test_agent_tools.py tests/test_agent_graph.py
 - El `RAGSystem` se crea una sola vez y `make_tools(rag)` lo comparte con las tools.
 - Los errores se devuelven como texto y no como excepciones: así el modelo puede reintentar o pedir aclaración.
 - `connect_pinecone` y `load_chunk_metas` se comparten entre `run_agent.py`, `evaluate.py`, `ingest_pinecone.py` y los tests.
-- La consigna menciona OpenAI o Anthropic. Se usa Gemini porque `build_chat_model()` devuelve el proveedor configurado y los tres soportan `bind_tools`. En el plan gratuito de Gemini puede aparecer el error 429.
 
 ## Unidad 6 — Orquestador multi-agente
 
 Un supervisor coordina a tres especialistas para responder consultas de clientes de Rumbo Sur: cuánto sale un paquete, cuánto es la seña y qué se hace cada día.
+
+Usa el mismo modelo que la unidad 5 (ver [Modelo](#modelo)).
 
 ### Evidencia por criterio de la rúbrica
 
