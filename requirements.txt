@@ -19,4 +19,9 @@ langchain-classic
 pytest
 langgraph
 langgraph-checkpoint-sqlite
-aiosqlite
+aiosqlitefastapi
+uvicorn[standard]
+redis
+langgraph-checkpoint-redis
+langsmith
+fakeredis
